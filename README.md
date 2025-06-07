@@ -1,8 +1,8 @@
-# Welcome to React Router!
+# TrailLog - Explore. Mark. Cherish.
 
-A modern, production-ready template for building full-stack React applications using React Router.
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
+<img src="docs/Gemini_Generated_Image_bkal7dbkal7dbkal.jpg" alt="TrailLog - Explore. Mark. Cherish." style="width:50%; height:auto;">
+
 
 ## Features
 
