@@ -1,9 +1,18 @@
-import { type RouteConfig, index, route } from "@react-router/dev/routes";
+import {
+  type RouteConfig,
+  route,
+  index,
+  layout,
+  prefix,
+} from "@react-router/dev/routes";
 
 export default [
   index("routes/home.tsx"),
-  route("/add-waypoint", "routes/add_waypoint.tsx"),
-  route("/edit-waypoint", "routes/edit_waypoint.tsx"),
+
   route("/map", "routes/map.tsx"),
-  route("/saved-waypoints", "routes/saved_waypoints.tsx"),
+  ...prefix("waypoints", [
+    index("routes/saved_waypoints.tsx"),
+    route("/add", "routes/add_waypoint.tsx"),
+    route("/edit", "routes/edit_waypoint.tsx"),
+  ]),
 ] satisfies RouteConfig;
