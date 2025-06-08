@@ -1,27 +1,12 @@
-<html>
-  <head>
-    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="" />
-    <link
-      rel="stylesheet"
-      as="style"
-      onload="this.rel='stylesheet'"
-      href="https://fonts.googleapis.com/css2?display=swap&amp;family=Noto+Sans%3Awght%40400%3B500%3B700%3B900&amp;family=Space+Grotesk%3Awght%40400%3B500%3B700"
-    />
-
-    <title>Stitch Design</title>
-    <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64," />
-
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-  </head>
-  <body>
+export default function Map() {
+  return (
     <div
-      class="relative flex size-full min-h-screen flex-col bg-slate-50 justify-between group/design-root overflow-x-hidden"
-      style="font-family: 'Space Grotesk', 'Noto Sans', sans-serif"
+      className="relative flex size-full min-h-screen flex-col bg-slate-50 justify-between group/design-root overflow-x-hidden"
     >
       <div>
-        <div class="flex items-center bg-slate-50 p-4 pb-2 justify-between">
+        <div className="flex items-center bg-slate-50 p-4 pb-2 justify-between">
           <div
-            class="text-[#0d141c] flex size-12 shrink-0 items-center"
+            className="text-[#0d141c] flex size-12 shrink-0 items-center"
             data-icon="ArrowLeft"
             data-size="24px"
             data-weight="regular"
@@ -39,25 +24,25 @@
             </svg>
           </div>
           <h2
-            class="text-[#0d141c] text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center pr-12"
+            className="text-[#0d141c] text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center pr-12"
           >
             Waypoints
           </h2>
         </div>
       </div>
       <div>
-        <div class="@container flex flex-col h-full flex-1">
-          <div class="flex flex-1 flex-col @[480px]:px-4 @[480px]:py-3">
+        <div className="@container flex flex-col h-full flex-1">
+          <div className="flex flex-1 flex-col @[480px]:px-4 @[480px]:py-3">
             <div
-              class="bg-cover bg-center flex min-h-[320px] flex-1 flex-col justify-between px-4 pb-4 pt-5 @[480px]:rounded-lg @[480px]:px-8 @[480px]:pb-6 @[480px]:pt-8"
-              style="
-                background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDl4uk8455gW-BZzCvB2vBXbKskwWj_pciqS84r9Nh5nTO3jRt1Zjs_PNFpbfrHNZfY7mNB34UC8fsP9iLKqKx2tt8k85PsO0S96mbE_pGCI_6EXP8MBhPpYAf-63FdSFKr91Hm8phxMKqAKtPQ6c9jpg89EBVP8exYwalCwxARVqjkIv2h253ln6vr_go2ZqTsT0f2WZJQv-9hm1tl1bbX1NMCeTwllB7wgSQoTksV3k3mGE_nNmPdvPKxmNHS5YgeyZPNdyAulbw');
-              "
+              className="bg-cover bg-center flex min-h-[320px] flex-1 flex-col justify-between px-4 pb-4 pt-5 @[480px]:rounded-lg @[480px]:px-8 @[480px]:pb-6 @[480px]:pt-8"
+              style={{
+                backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuDl4uk8455gW-BZzCvB2vBXbKskwWj_pciqS84r9Nh5nTO3jRt1Zjs_PNFpbfrHNZfY7mNB34UC8fsP9iLKqKx2tt8k85PsO0S96mbE_pGCI_6EXP8MBhPpYAf-63FdSFKr91Hm8phxMKqAKtPQ6c9jpg89EBVP8exYwalCwxARVqjkIv2h253ln6vr_go2ZqTsT0f2WZJQv-9hm1tl1bbX1NMCeTwllB7wgSQoTksV3k3mGE_nNmPdvPKxmNHS5YgeyZPNdyAulbw')",
+              }}
             >
-              <label class="flex flex-col min-w-40 h-12">
-                <div class="flex w-full flex-1 items-stretch rounded-lg h-full">
+              <label className="flex flex-col min-w-40 h-12">
+                <div className="flex w-full flex-1 items-stretch rounded-lg h-full">
                   <div
-                    class="text-[#49739c] flex border-none bg-slate-50 items-center justify-center pl-4 rounded-l-lg border-r-0"
+                    className="text-[#49739c] flex border-none bg-slate-50 items-center justify-center pl-4 rounded-l-lg border-r-0"
                     data-icon="MagnifyingGlass"
                     data-size="24px"
                     data-weight="regular"
@@ -76,18 +61,18 @@
                   </div>
                   <input
                     placeholder="Search for a place"
-                    class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#0d141c] focus:outline-0 focus:ring-0 border-none bg-slate-50 focus:border-none h-full placeholder:text-[#49739c] px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal"
-                    value=""
+                    className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#0d141c] focus:outline-0 focus:ring-0 border-none bg-slate-50 focus:border-none h-full placeholder:text-[#49739c] px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal"
+                    defaultValue=""
                   />
                 </div>
               </label>
-              <div class="flex flex-col items-end gap-3">
-                <div class="flex flex-col gap-0.5">
+              <div className="flex flex-col items-end gap-3">
+                <div className="flex flex-col gap-0.5">
                   <button
-                    class="flex size-10 items-center justify-center rounded-t-lg bg-slate-50 shadow-[0_2px_4px_rgba(0,0,0,0.1)]"
+                    className="flex size-10 items-center justify-center rounded-t-lg bg-slate-50 shadow-[0_2px_4px_rgba(0,0,0,0.1)]"
                   >
                     <div
-                      class="text-[#0d141c]"
+                      className="text-[#0d141c]"
                       data-icon="Plus"
                       data-size="24px"
                       data-weight="regular"
@@ -106,10 +91,10 @@
                     </div>
                   </button>
                   <button
-                    class="flex size-10 items-center justify-center rounded-b-lg bg-slate-50 shadow-[0_2px_4px_rgba(0,0,0,0.1)]"
+                    className="flex size-10 items-center justify-center rounded-b-lg bg-slate-50 shadow-[0_2px_4px_rgba(0,0,0,0.1)]"
                   >
                     <div
-                      class="text-[#0d141c]"
+                      className="text-[#0d141c]"
                       data-icon="Minus"
                       data-size="24px"
                       data-weight="regular"
@@ -129,10 +114,10 @@
                   </button>
                 </div>
                 <button
-                  class="flex size-10 items-center justify-center rounded-lg bg-slate-50 shadow-[0_2px_4px_rgba(0,0,0,0.1)]"
+                  className="flex size-10 items-center justify-center rounded-lg bg-slate-50 shadow-[0_2px_4px_rgba(0,0,0,0.1)]"
                 >
                   <div
-                    class="text-[#0d141c]"
+                    className="text-[#0d141c]"
                     data-icon="NavigationArrow"
                     data-size="24px"
                     data-weight="regular"
@@ -155,12 +140,12 @@
             </div>
           </div>
         </div>
-        <div class="flex justify-end overflow-hidden px-5 pb-5">
+        <div className="flex justify-end overflow-hidden px-5 pb-5">
           <button
-            class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-14 bg-[#0c7ff2] text-slate-50 text-base font-bold leading-normal tracking-[0.015em] min-w-0 px-2 gap-4 pl-4 pr-6"
+            className="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-14 bg-[#0c7ff2] text-slate-50 text-base font-bold leading-normal tracking-[0.015em] min-w-0 px-2 gap-4 pl-4 pr-6"
           >
             <div
-              class="text-slate-50"
+              className="text-slate-50"
               data-icon="Plus"
               data-size="24px"
               data-weight="regular"
@@ -179,8 +164,8 @@
             </div>
           </button>
         </div>
-        <div class="h-5 bg-slate-50"></div>
+        <div className="h-5 bg-slate-50"></div>
       </div>
     </div>
-  </body>
-</html>
+  );
+}
