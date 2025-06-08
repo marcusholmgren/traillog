@@ -1,35 +1,28 @@
-import type { MetaFunction } from "@remix-run/node";
-import React, { useEffect, useState, Suspense } from 'react';
+import React, { useEffect, useState, Suspense } from "react";
 // Popup can be imported directly if it's small or used closely with Marker
-import { Popup } from 'react-leaflet';
-import L from 'leaflet';
-
-// Dynamically import react-leaflet components
-const MapContainer = React.lazy(() => import('react-leaflet').then(module => ({ default: module.MapContainer })));
-const TileLayer = React.lazy(() => import('react-leaflet').then(module => ({ default: module.TileLayer })));
-const Marker = React.lazy(() => import('react-leaflet').then(module => ({ default: module.Marker })));
+import L from "leaflet";
+import { MapContainer, Marker, TileLayer, useMap, Popup } from "react-leaflet";
 
 // Fix for default icon issue with webpack
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   // These lines are problematic for some Vite plugins during SSR/test analysis if not guarded.
   // They are intended for browser execution.
   delete (L.Icon.Default.prototype as any)._getIconUrl;
   L.Icon.Default.mergeOptions({
-    iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
-    iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
-    shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+    iconRetinaUrl:
+      "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
+    iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
+    shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
   });
 }
 
-export const meta: MetaFunction = () => {
-  return [
-    { title: "User Location Map" },
-    { name: "description", content: "A map displaying the user's current location." },
-  ];
+type UserPosition = {
+  longitude: number;
+  latitude: number;
 };
 
 export default function MapPage() {
-  const [position, setPosition] = useState<[number, number] | null>(null);
+  const [position, setPosition] = useState<UserPosition | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,13 +34,18 @@ export default function MapPage() {
     }
 
     const successHandler = (location: GeolocationPosition) => {
-      setPosition([location.coords.latitude, location.coords.longitude]);
+      setPosition({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
       setLoading(false);
     };
 
     const errorHandler = (err: GeolocationPositionError) => {
       if (err.code === err.PERMISSION_DENIED) {
-        setError("Location access denied. Please enable location services in your browser settings.");
+        setError(
+          "Location access denied. Please enable location services in your browser settings."
+        );
       } else {
         setError(`Error getting location: ${err.message}`);
       }
@@ -66,7 +64,7 @@ export default function MapPage() {
   }
 
   if (error) {
-    return <p style={{ color: 'red' }}>{error}</p>;
+    return <p style={{ color: "red" }}>{error}</p>;
   }
 
   if (position) {
@@ -84,16 +82,24 @@ export default function MapPage() {
 }
 
 // New component to render the actual map with lazy-loaded components
-function ActualMap({ userPosition }: { userPosition: [number, number] }) {
+function ActualMap({ userPosition }: { userPosition: UserPosition }) {
+  console.log(userPosition);
+  const centerPosition = [userPosition.latitude, userPosition.longitude] as [number, number];
+  console.log(centerPosition);
   return (
-    <MapContainer center={userPosition} zoom={13} style={{ height: "80%", width: "100%" }}>
+    <MapContainer
+      center={centerPosition}
+      zoom={13}
+      style={{ height: "80%", width: "100%" }}
+    >
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       />
-      <Marker position={userPosition}>
+      <Marker position={centerPosition}>
         <Popup>
-          You are here. <br /> Latitude: {userPosition[0]}, Longitude: {userPosition[1]}
+          You are here. <br /> Latitude: {userPosition.latitude}, Longitude:{" "}
+          {userPosition.longitude}
         </Popup>
       </Marker>
     </MapContainer>

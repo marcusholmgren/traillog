@@ -9,10 +9,9 @@ import {
 
 import type { Route } from "./+types/root";
 import "./app.css";
-import leafletStylesheetUrl from "leaflet/dist/leaflet.css?url";
+import "./leaflet-styles.css";
 
 export const links: Route.LinksFunction = () => [
-  { rel: "stylesheet", href: leafletStylesheetUrl },
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
     rel: "preconnect",

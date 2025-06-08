@@ -1,27 +1,12 @@
-<html>
-  <head>
-    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="" />
-    <link
-      rel="stylesheet"
-      as="style"
-      onload="this.rel='stylesheet'"
-      href="https://fonts.googleapis.com/css2?display=swap&amp;family=Noto+Sans%3Awght%40400%3B500%3B700%3B900&amp;family=Space+Grotesk%3Awght%40400%3B500%3B700"
-    />
-
-    <title>Stitch Design</title>
-    <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64," />
-
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-  </head>
-  <body>
+export default function EditWaypoint() {
+  return (
     <div
-      class="relative flex size-full min-h-screen flex-col bg-slate-50 justify-between group/design-root overflow-x-hidden"
-      style="font-family: 'Space Grotesk', 'Noto Sans', sans-serif"
+      className="relative flex size-full min-h-screen flex-col bg-slate-50 justify-between group/design-root overflow-x-hidden"
     >
       <div>
-        <div class="flex items-center bg-slate-50 p-4 pb-2 justify-between">
+        <div className="flex items-center bg-slate-50 p-4 pb-2 justify-between">
           <div
-            class="text-[#0d141c] flex size-12 shrink-0 items-center"
+            className="text-[#0d141c] flex size-12 shrink-0 items-center"
             data-icon="X"
             data-size="24px"
             data-weight="regular"
@@ -39,91 +24,92 @@
             </svg>
           </div>
           <h2
-            class="text-[#0d141c] text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center pr-12"
+            className="text-[#0d141c] text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center pr-12"
           >
             Edit Waypoint
           </h2>
         </div>
-        <div class="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
-          <label class="flex flex-col min-w-40 flex-1">
-            <p class="text-[#0d141c] text-base font-medium leading-normal pb-2">
+        <div className="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
+          <label className="flex flex-col min-w-40 flex-1">
+            <p className="text-[#0d141c] text-base font-medium leading-normal pb-2">
               Name
             </p>
             <input
-              class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#0d141c] focus:outline-0 focus:ring-0 border-none bg-[#e7edf4] focus:border-none h-14 placeholder:text-[#49739c] p-4 text-base font-normal leading-normal"
-              value=""
+              className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#0d141c] focus:outline-0 focus:ring-0 border-none bg-[#e7edf4] focus:border-none h-14 placeholder:text-[#49739c] p-4 text-base font-normal leading-normal"
+              defaultValue=""
             />
           </label>
         </div>
-        <div class="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
-          <label class="flex flex-col min-w-40 flex-1">
-            <p class="text-[#0d141c] text-base font-medium leading-normal pb-2">
+        <div className="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
+          <label className="flex flex-col min-w-40 flex-1">
+            <p className="text-[#0d141c] text-base font-medium leading-normal pb-2">
               Latitude
             </p>
             <input
-              class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#0d141c] focus:outline-0 focus:ring-0 border-none bg-[#e7edf4] focus:border-none h-14 placeholder:text-[#49739c] p-4 text-base font-normal leading-normal"
-              value=""
+              className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#0d141c] focus:outline-0 focus:ring-0 border-none bg-[#e7edf4] focus:border-none h-14 placeholder:text-[#49739c] p-4 text-base font-normal leading-normal"
+              defaultValue=""
             />
           </label>
         </div>
-        <div class="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
-          <label class="flex flex-col min-w-40 flex-1">
-            <p class="text-[#0d141c] text-base font-medium leading-normal pb-2">
+        <div className="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
+          <label className="flex flex-col min-w-40 flex-1">
+            <p className="text-[#0d141c] text-base font-medium leading-normal pb-2">
               Longitude
             </p>
             <input
-              class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#0d141c] focus:outline-0 focus:ring-0 border-none bg-[#e7edf4] focus:border-none h-14 placeholder:text-[#49739c] p-4 text-base font-normal leading-normal"
-              value=""
+              className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#0d141c] focus:outline-0 focus:ring-0 border-none bg-[#e7edf4] focus:border-none h-14 placeholder:text-[#49739c] p-4 text-base font-normal leading-normal"
+              defaultValue=""
             />
           </label>
         </div>
-        <div class="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
-          <label class="flex flex-col min-w-40 flex-1">
-            <p class="text-[#0d141c] text-base font-medium leading-normal pb-2">
+        <div className="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
+          <label className="flex flex-col min-w-40 flex-1">
+            <p className="text-[#0d141c] text-base font-medium leading-normal pb-2">
               Notes
             </p>
             <textarea
-              class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#0d141c] focus:outline-0 focus:ring-0 border-none bg-[#e7edf4] focus:border-none min-h-36 placeholder:text-[#49739c] p-4 text-base font-normal leading-normal"
+              className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#0d141c] focus:outline-0 focus:ring-0 border-none bg-[#e7edf4] focus:border-none min-h-36 placeholder:text-[#49739c] p-4 text-base font-normal leading-normal"
+              defaultValue=""
             ></textarea>
           </label>
         </div>
-        <div class="flex w-full grow bg-slate-50 @container py-3">
+        <div className="flex w-full grow bg-slate-50 @container py-3">
           <div
-            class="w-full gap-1 overflow-hidden bg-slate-50 @[480px]:gap-2 aspect-[3/2] flex"
+            className="w-full gap-1 overflow-hidden bg-slate-50 @[480px]:gap-2 aspect-[3/2] flex"
           >
             <div
-              class="w-full bg-center bg-no-repeat bg-cover aspect-auto rounded-none flex-1"
-              style="
-                background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDHGMkN9JXfjkuyVMgqHkiUu30rOdEcWf_kC9e6eiuokA4JvIoi3IFyf_HTbwV0_3ojFbxEn6ipxDKt97ShBirh5orB9qzOmcZdovMRoqSkbdMChWyasc1exQCd8INeZFmX8NTrtZAJcUX8kLO6tVhncQG95XCFnt36wnr3N_rWhxhFvAupTDmCeeFDQ62LrxOWZt3M8XcI8Ma4zsD5bltXlqovn36k8HdYko9rVw0Xr0BOXdQXPA8leleNX7PM6IgEdsmzEnfmzt8');
-              "
+              className="w-full bg-center bg-no-repeat bg-cover aspect-auto rounded-none flex-1"
+              style={{
+                backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuDHGMkN9JXfjkuyVMgqHkiUu30rOdEcWf_kC9e6eiuokA4JvIoi3IFyf_HTbwV0_3ojFbxEn6ipxDKt97ShBirh5orB9qzOmcZdovMRoqSkbdMChWyasc1exQCd8INeZFmX8NTrtZAJcUX8kLO6tVhncQG95XCFnt36wnr3N_rWhxhFvAupTDmCeeFDQ62LrxOWZt3M8XcI8Ma4zsD5bltXlqovn36k8HdYko9rVw0Xr0BOXdQXPA8leleNX7PM6IgEdsmzEnfmzt8')",
+              }}
             ></div>
           </div>
         </div>
-        <div class="flex justify-stretch">
-          <div class="flex flex-1 gap-3 flex-wrap px-4 py-3 justify-between">
+        <div className="flex justify-stretch">
+          <div className="flex flex-1 gap-3 flex-wrap px-4 py-3 justify-between">
             <button
-              class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#e7edf4] text-[#0d141c] text-sm font-bold leading-normal tracking-[0.015em]"
+              className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#e7edf4] text-[#0d141c] text-sm font-bold leading-normal tracking-[0.015em]"
             >
-              <span class="truncate">Remove</span>
+              <span className="truncate">Remove</span>
             </button>
             <button
-              class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#0c7ff2] text-slate-50 text-sm font-bold leading-normal tracking-[0.015em]"
+              className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#0c7ff2] text-slate-50 text-sm font-bold leading-normal tracking-[0.015em]"
             >
-              <span class="truncate">Save</span>
+              <span className="truncate">Save</span>
             </button>
           </div>
         </div>
       </div>
       <div>
         <div
-          class="flex gap-2 border-t border-[#e7edf4] bg-slate-50 px-4 pb-3 pt-2"
+          className="flex gap-2 border-t border-[#e7edf4] bg-slate-50 px-4 pb-3 pt-2"
         >
           <a
-            class="just flex flex-1 flex-col items-center justify-end gap-1 rounded-full text-[#0d141c]"
+            className="just flex flex-1 flex-col items-center justify-end gap-1 rounded-full text-[#0d141c]"
             href="#"
           >
             <div
-              class="text-[#0d141c] flex h-8 items-center justify-center"
+              className="text-[#0d141c] flex h-8 items-center justify-center"
               data-icon="MapTrifold"
               data-size="24px"
               data-weight="fill"
@@ -142,11 +128,11 @@
             </div>
           </a>
           <a
-            class="just flex flex-1 flex-col items-center justify-end gap-1 text-[#49739c]"
+            className="just flex flex-1 flex-col items-center justify-end gap-1 text-[#49739c]"
             href="#"
           >
             <div
-              class="text-[#49739c] flex h-8 items-center justify-center"
+              className="text-[#49739c] flex h-8 items-center justify-center"
               data-icon="ListBullets"
               data-size="24px"
               data-weight="regular"
@@ -165,11 +151,11 @@
             </div>
           </a>
           <a
-            class="just flex flex-1 flex-col items-center justify-end gap-1 text-[#49739c]"
+            className="just flex flex-1 flex-col items-center justify-end gap-1 text-[#49739c]"
             href="#"
           >
             <div
-              class="text-[#49739c] flex h-8 items-center justify-center"
+              className="text-[#49739c] flex h-8 items-center justify-center"
               data-icon="Plus"
               data-size="24px"
               data-weight="regular"
@@ -188,11 +174,11 @@
             </div>
           </a>
           <a
-            class="just flex flex-1 flex-col items-center justify-end gap-1 text-[#49739c]"
+            className="just flex flex-1 flex-col items-center justify-end gap-1 text-[#49739c]"
             href="#"
           >
             <div
-              class="text-[#49739c] flex h-8 items-center justify-center"
+              className="text-[#49739c] flex h-8 items-center justify-center"
               data-icon="Gear"
               data-size="24px"
               data-weight="regular"
@@ -211,8 +197,8 @@
             </div>
           </a>
         </div>
-        <div class="h-5 bg-slate-50"></div>
+        <div className="h-5 bg-slate-50"></div>
       </div>
     </div>
-  </body>
-</html>
+  );
+}
