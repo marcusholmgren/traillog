@@ -9,7 +9,7 @@ import path from "path"; // Needed for resolve.alias
 const vitestConfig: VitestUserConfigInterface["test"] = {
   globals: true,
   environment: "jsdom", // Ensure JSDOM environment for navigator
-  setupFiles: ["./app/test-setup.ts"], // Path to my setup file
+  setupFiles: ["./app/test-setup.ts", "./app/test-setup-mocks.tsx"], // Path to setup files
 };
 
 export default defineConfig({
@@ -17,9 +17,13 @@ export default defineConfig({
   test: vitestConfig, // Add the 'test' property here
   resolve: {
     alias: {
-      // Alias 'leaflet' to the mock module.
-      // This might help the React Router plugin during its analysis phase.
+      // Alias 'leaflet' to the mock module for SSR/build
       // 'leaflet': path.resolve(__dirname, './app/mock-leaflet.js'),
     },
+  },
+  // Ensure CSS imports don't fail during testing
+  css: {
+    // Don't extract CSS during testing
+    devSourcemap: true,
   },
 });
