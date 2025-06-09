@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom"; // Import Link
+import { useNavigate, NavLink } from "react-router"; // Import Link
 import { getSavedWaypoints, type Waypoint } from "../services/db";
+import { data } from "react-router";
 
 export default function SavedWaypoints() {
   const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
@@ -101,16 +102,16 @@ export default function SavedWaypoints() {
                     {waypoint.longitude.toFixed(4)}
                   </p>
                   <p className="text-gray-500 text-xs font-normal leading-normal">
-                    Saved: {new Date(waypoint.createdAt).toLocaleString()}
+                    Created: {dateFormatter(waypoint.createdAt)}
                   </p>
                 </div>
-                <Link
-                  to={`/edit-waypoint/${waypoint.id}`}
+                <NavLink
+                  to={`/waypoints/edit/${waypoint.id}`}
                   className="ml-auto flex-shrink-0 px-3 py-1.5 text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 rounded-md shadow-sm transition-colors"
                   aria-label={`Edit ${waypoint.name}`}
                 >
                   Edit
-                </Link>
+                </NavLink>
               </div>
             ))}
           </div>
@@ -151,3 +152,13 @@ export default function SavedWaypoints() {
     </div>
   );
 }
+
+const dateFormatter = (number: number | Date) => {
+  const userLocales = navigator.languages || [navigator.language];
+  //TODO console.log(userLocales);
+  const seLong = new Intl.DateTimeFormat(userLocales, {
+    dateStyle: "full",
+    timeStyle: "short",
+  });
+  return seLong.format(number);
+};
