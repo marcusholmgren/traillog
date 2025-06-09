@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { openDB, deleteDB } from "idb";
 
 // Import fake-indexeddb/auto at the very top of your test file
