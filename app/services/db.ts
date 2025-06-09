@@ -6,6 +6,12 @@ export interface Waypoint {
   latitude: number;
   longitude: number;
   createdAt: number;
+  notes?: string;
+}
+
+export interface WaypointUpdate {
+  name?: string;
+  notes?: string;
 }
 
 interface WaypointsDBSchema extends DBSchema {
@@ -50,4 +56,33 @@ export async function addWaypoint(
 export async function getSavedWaypoints(): Promise<Waypoint[]> {
   const db = await openWaypointsDB();
   return db.getAllFromIndex(STORE_NAME, "createdAt");
+}
+
+export async function updateWaypoint(
+  id: number,
+  updates: WaypointUpdate
+): Promise<Waypoint> {
+  const db = await openWaypointsDB();
+  const waypoint = await db.get(STORE_NAME, id);
+
+  if (!waypoint) {
+    throw new Error(`Waypoint with id ${id} not found`);
+  }
+
+  // Update only the provided fields
+  const updatedWaypoint = { ...waypoint };
+  if (updates.name !== undefined) {
+    updatedWaypoint.name = updates.name;
+  }
+  if (updates.notes !== undefined) {
+    updatedWaypoint.notes = updates.notes;
+  }
+
+  await db.put(STORE_NAME, updatedWaypoint);
+  return updatedWaypoint;
+}
+
+export async function getWaypointById(id: number): Promise<Waypoint | undefined> {
+  const db = await openWaypointsDB();
+  return db.get(STORE_NAME, id);
 }

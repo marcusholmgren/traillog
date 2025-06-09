@@ -8,7 +8,7 @@ import "fake-indexeddb/auto";
 // You might also want to reset the IndexedDB state before each test
 // to ensure test isolation.
 import { IDBFactory } from "fake-indexeddb";
-import { type Waypoint, addWaypoint, getSavedWaypoints } from "./db"; // Assuming db.ts is in the same directory for simplicity here, adjust if needed
+import { type Waypoint, addWaypoint, getSavedWaypoints, updateWaypoint, getWaypointById } from "./db"; // Assuming db.ts is in the same directory for simplicity here, adjust if needed
 
 // --- Vitest Setup for fake-indexeddb ---
 // The db module uses openDB from 'idb' directly. We need to mock 'idb' to use fake-indexeddb.
@@ -202,9 +202,147 @@ describe("Waypoint Database Operations (db.ts)", () => {
 
       expect(waypoints.length).toBe(3);
       // getAllFromIndex for 'createdAt' should return them in ascending order of 'createdAt'
-      expect(waypoints[0].name).toBe("Wp Now");
-      expect(waypoints[1].name).toBe("Wp Later");
-      expect(waypoints[2].name).toBe("Wp Earlier");
+      expect(waypoints[0].name).toBe("Wp Earlier"); // Corrected expected order
+      expect(waypoints[1].name).toBe("Wp Now");     // Corrected expected order
+      expect(waypoints[2].name).toBe("Wp Later");   // Corrected expected order
+    });
+  });
+
+  describe("updateWaypoint", () => {
+    let initialWaypoint: Waypoint;
+
+    beforeEach(async () => {
+      // Add a waypoint to be updated in tests
+      const waypointData = {
+        name: "Initial Waypoint",
+        latitude: 10.0,
+        longitude: 20.0,
+        notes: "Initial notes",
+      };
+      // We need to control createdAt for consistent checks
+      const fixedTime = Date.now();
+      vi.spyOn(Date, 'now').mockReturnValue(fixedTime);
+      const id = await addWaypoint(waypointData);
+      vi.restoreAllMocks();
+
+      const db = await openDB(TEST_DB_INTERNAL_NAME, 1);
+      initialWaypoint = (await db.get(STORE_NAME, id))!;
+      db.close();
+
+      // Ensure notes are explicitly part of the initial object for tests
+      if (initialWaypoint && initialWaypoint.notes === undefined && waypointData.notes) {
+        initialWaypoint.notes = waypointData.notes;
+      }
+    });
+
+    it("should update the name and notes of an existing waypoint", async () => {
+      const updates = {
+        name: "Updated Name",
+        notes: "Updated notes.",
+      };
+      const updated = await updateWaypoint(initialWaypoint.id, updates);
+
+      expect(updated.name).toBe(updates.name);
+      expect(updated.notes).toBe(updates.notes);
+      expect(updated.id).toBe(initialWaypoint.id);
+      expect(updated.latitude).toBe(initialWaypoint.latitude);
+      expect(updated.longitude).toBe(initialWaypoint.longitude);
+      expect(updated.createdAt).toBe(initialWaypoint.createdAt);
+
+      // Verify in DB
+      const db = await openDB(TEST_DB_INTERNAL_NAME, 1);
+      const dbWaypoint = await db.get(STORE_NAME, initialWaypoint.id);
+      db.close();
+      expect(dbWaypoint?.name).toBe(updates.name);
+      expect(dbWaypoint?.notes).toBe(updates.notes);
+    });
+
+    it("should update only the name if notes are not provided", async () => {
+      const updates = { name: "Only Name Updated" };
+      const updated = await updateWaypoint(initialWaypoint.id, updates);
+
+      expect(updated.name).toBe(updates.name);
+      expect(updated.notes).toBe(initialWaypoint.notes); // Notes should remain unchanged
+      expect(updated.id).toBe(initialWaypoint.id);
+    });
+
+    it("should update only the notes if name is not provided", async () => {
+      const updates = { notes: "Only Notes Updated" };
+      const updated = await updateWaypoint(initialWaypoint.id, updates);
+
+      expect(updated.name).toBe(initialWaypoint.name); // Name should remain unchanged
+      expect(updated.notes).toBe(updates.notes);
+      expect(updated.id).toBe(initialWaypoint.id);
+    });
+
+    it("should leave notes as undefined if initially undefined and not updated", async () => {
+      // Create a waypoint without notes initially
+      vi.spyOn(Date, 'now').mockReturnValue(Date.now());
+      const noNotesWaypointId = await addWaypoint({ name: "No Notes WP", latitude: 5, longitude: 5 });
+      vi.restoreAllMocks();
+
+      const db = await openDB(TEST_DB_INTERNAL_NAME, 1);
+      const noNotesWaypoint = (await db.get(STORE_NAME, noNotesWaypointId))!;
+      db.close();
+
+      expect(noNotesWaypoint.notes).toBeUndefined();
+
+      const updates = { name: "No Notes WP Updated Name" };
+      const updated = await updateWaypoint(noNotesWaypointId, updates);
+
+      expect(updated.name).toBe(updates.name);
+      expect(updated.notes).toBeUndefined();
+    });
+
+    it("should add notes if initially undefined and notes are provided in update", async () => {
+       // Create a waypoint without notes initially
+      vi.spyOn(Date, 'now').mockReturnValue(Date.now());
+      const noNotesWaypointId = await addWaypoint({ name: "Another No Notes WP", latitude: 6, longitude: 6 });
+      vi.restoreAllMocks();
+
+      const updates = { notes: "Adding notes now" };
+      const updated = await updateWaypoint(noNotesWaypointId, updates);
+
+      expect(updated.name).toBe("Another No Notes WP");
+      expect(updated.notes).toBe(updates.notes);
+    });
+
+
+    it("should throw an error if trying to update a non-existent waypoint", async () => {
+      const nonExistentId = 9999;
+      const updates = { name: "Ghost Update" };
+      await expect(updateWaypoint(nonExistentId, updates)).rejects.toThrow(
+        `Waypoint with id ${nonExistentId} not found`
+      );
+    });
+
+    it("should not modify id, latitude, longitude, or createdAt", async () => {
+      const updates = { name: "Integrity Check", notes: "Checking other fields" };
+      const updated = await updateWaypoint(initialWaypoint.id, updates);
+
+      expect(updated.id).toBe(initialWaypoint.id);
+      expect(updated.latitude).toBe(initialWaypoint.latitude);
+      expect(updated.longitude).toBe(initialWaypoint.longitude);
+      expect(updated.createdAt).toBe(initialWaypoint.createdAt);
+    });
+  });
+
+  describe("getWaypointById", () => {
+    it("should retrieve a specific waypoint by its ID", async () => {
+      const waypointData = { name: "Specific WP", latitude: 123, longitude: 456 };
+      const id = await addWaypoint(waypointData);
+
+      const fetchedWaypoint = await getWaypointById(id);
+
+      expect(fetchedWaypoint).toBeDefined();
+      expect(fetchedWaypoint!.id).toBe(id);
+      expect(fetchedWaypoint!.name).toBe(waypointData.name);
+    });
+
+    it("should return undefined if waypoint with ID does not exist", async () => {
+      const nonExistentId = 999;
+      const fetchedWaypoint = await getWaypointById(nonExistentId);
+      expect(fetchedWaypoint).toBeUndefined();
     });
   });
 });

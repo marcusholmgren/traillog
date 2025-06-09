@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, Link } from "react-router-dom"; // Import Link
 import { getSavedWaypoints, type Waypoint } from "../services/db";
 
 export default function SavedWaypoints() {
@@ -104,6 +104,13 @@ export default function SavedWaypoints() {
                     Saved: {new Date(waypoint.createdAt).toLocaleString()}
                   </p>
                 </div>
+                <Link
+                  to={`/edit-waypoint/${waypoint.id}`}
+                  className="ml-auto flex-shrink-0 px-3 py-1.5 text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 rounded-md shadow-sm transition-colors"
+                  aria-label={`Edit ${waypoint.name}`}
+                >
+                  Edit
+                </Link>
               </div>
             ))}
           </div>
