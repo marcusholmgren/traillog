@@ -1,5 +1,7 @@
 # TrailLog - Explore. Mark. Cherish.
 
+[![Build and Test](https://github.com/marcusholmgren/traillog/actions/workflows/ci.yml/badge.svg)](https://github.com/marcusholmgren/traillog/actions/workflows/ci.yml)
+[![Deploy to GitHub Pages](https://github.com/marcusholmgren/traillog/actions/workflows/deploy.yml/badge.svg)](https://github.com/marcusholmgren/traillog/actions/workflows/deploy.yml)
 
 <img src="docs/Gemini_Generated_Image_bkal7dbkal7dbkal.jpg" alt="TrailLog - Explore. Mark. Cherish." style="width:50%; height:auto;">
 
