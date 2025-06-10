@@ -14,6 +14,7 @@ import {
   getSavedWaypoints,
   updateWaypoint,
   getWaypointById,
+  waypointsToGeoJSON,
 } from "./db"; // Assuming db.ts is in the same directory for simplicity here, adjust if needed
 
 // --- Vitest Setup for fake-indexeddb ---
@@ -367,6 +368,102 @@ describe("Waypoint Database Operations (db.ts)", () => {
       const nonExistentId = 999;
       const fetchedWaypoint = await getWaypointById(nonExistentId);
       expect(fetchedWaypoint).toBeUndefined();
+    });
+  });
+
+  describe("waypointsToGeoJSON", () => {
+    const mockWaypoints: Waypoint[] = [
+      { id: 1, name: "Waypoint 1", latitude: 10, longitude: 20, createdAt: 1678886400000, notes: "Note 1" },
+      { id: 2, name: "Waypoint 2", latitude: 12, longitude: 22, createdAt: 1678886500000 }, // No notes
+      { id: 3, name: "Waypoint 3", latitude: 15, longitude: 25, createdAt: 1678886600000, notes: "Note 3" },
+    ];
+
+    it("should return an empty FeatureCollection for an empty waypoints array", () => {
+      const result = waypointsToGeoJSON([]);
+      expect(result.type).toBe("FeatureCollection");
+      expect(result.features).toEqual([]);
+    });
+
+    it("should convert a single waypoint correctly (with notes)", () => {
+      const singleWaypoint: Waypoint = { ...mockWaypoints[0] };
+      const result = waypointsToGeoJSON([singleWaypoint]);
+
+      expect(result.type).toBe("FeatureCollection");
+      expect(result.features.length).toBe(1);
+
+      const feature = result.features[0];
+      expect(feature.type).toBe("Feature");
+      expect(feature.geometry.type).toBe("Point");
+      expect(feature.geometry.coordinates).toEqual([singleWaypoint.longitude, singleWaypoint.latitude]);
+      expect(feature.properties).toEqual({
+        id: singleWaypoint.id,
+        name: singleWaypoint.name,
+        createdAt: singleWaypoint.createdAt,
+        notes: singleWaypoint.notes,
+      });
+    });
+
+    it("should convert a single waypoint correctly (without notes)", () => {
+      const singleWaypointNoNotes: Waypoint = { ...mockWaypoints[1] };
+      const result = waypointsToGeoJSON([singleWaypointNoNotes]);
+
+      expect(result.type).toBe("FeatureCollection");
+      expect(result.features.length).toBe(1);
+
+      const feature = result.features[0];
+      expect(feature.type).toBe("Feature");
+      expect(feature.geometry.type).toBe("Point");
+      expect(feature.geometry.coordinates).toEqual([singleWaypointNoNotes.longitude, singleWaypointNoNotes.latitude]);
+      expect(feature.properties).toEqual({
+        id: singleWaypointNoNotes.id,
+        name: singleWaypointNoNotes.name,
+        createdAt: singleWaypointNoNotes.createdAt,
+        // 'notes' property should be absent
+      });
+      expect(feature.properties).not.toHaveProperty("notes");
+    });
+
+    it("should convert multiple waypoints correctly", () => {
+      const result = waypointsToGeoJSON(mockWaypoints);
+
+      expect(result.type).toBe("FeatureCollection");
+      expect(result.features.length).toBe(mockWaypoints.length);
+
+      mockWaypoints.forEach((waypoint, index) => {
+        const feature = result.features[index];
+        expect(feature.type).toBe("Feature");
+        expect(feature.geometry.type).toBe("Point");
+        expect(feature.geometry.coordinates).toEqual([waypoint.longitude, waypoint.latitude]);
+        expect(feature.properties.id).toBe(waypoint.id);
+        expect(feature.properties.name).toBe(waypoint.name);
+        expect(feature.properties.createdAt).toBe(waypoint.createdAt);
+
+        if (waypoint.notes) {
+          expect(feature.properties.notes).toBe(waypoint.notes);
+        } else {
+          expect(feature.properties).not.toHaveProperty("notes");
+        }
+      });
+    });
+
+    it("should handle waypoint with notes property explicitly set to undefined", () => {
+      const waypointWithUndefinedNotes: Waypoint = {
+        id: 4,
+        name: "Undefined Notes WP",
+        latitude: 30,
+        longitude: 40,
+        createdAt: 1678886700000,
+        notes: undefined,
+      };
+      const result = waypointsToGeoJSON([waypointWithUndefinedNotes]);
+      expect(result.features.length).toBe(1);
+      const feature = result.features[0];
+      expect(feature.properties).toEqual({
+        id: waypointWithUndefinedNotes.id,
+        name: waypointWithUndefinedNotes.name,
+        createdAt: waypointWithUndefinedNotes.createdAt,
+      });
+      expect(feature.properties).not.toHaveProperty("notes");
     });
   });
 });

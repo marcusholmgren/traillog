@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, NavLink } from "react-router"; // Import Link
-import { getSavedWaypoints, type Waypoint } from "../services/db";
+import { getSavedWaypoints, type Waypoint, waypointsToGeoJSON } from "../services/db";
 import { data } from "react-router";
 
 export default function SavedWaypoints() {
@@ -32,6 +32,30 @@ export default function SavedWaypoints() {
 
   const handleAddWaypoint = () => {
     navigate("/add-waypoint"); // Navigate to add waypoint page
+  };
+
+  const handleExportToGeoJSON = async () => {
+    try {
+      const waypoints = await getSavedWaypoints();
+      if (waypoints.length === 0) {
+        alert("No waypoints to export."); // Or some other user feedback
+        return;
+      }
+      const geojsonData = waypointsToGeoJSON(waypoints);
+      const jsonString = JSON.stringify(geojsonData, null, 2); // Pretty print JSON
+      const blob = new Blob([jsonString], { type: "application/json" });
+      const href = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = href;
+      link.download = "waypoints.geojson";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(href);
+    } catch (err) {
+      console.error("Error exporting to GeoJSON:", err);
+      alert("Failed to export waypoints. See console for details.");
+    }
   };
 
   return (
@@ -120,15 +144,29 @@ export default function SavedWaypoints() {
       <div className="mt-auto">
         {" "}
         {/* Ensures buttons are at the bottom */}
-        <div className="flex justify-end overflow-hidden px-5 pb-5 pt-2">
+        <div className="flex justify-between items-center overflow-hidden px-5 pb-5 pt-2">
           {" "}
-          {/* Added pt-2 for some spacing */}
+          {/* Changed to justify-between and items-center */}
+          <button
+            onClick={handleExportToGeoJSON}
+            className="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-14 bg-slate-600 hover:bg-slate-700 text-slate-50 text-base font-bold leading-normal tracking-[0.015em] min-w-0 px-4 gap-2"
+            data-testid="export-geojson-button"
+          >
+            <div
+              className="text-slate-50"
+              data-icon="Download" /* Using a generic download icon idea */
+              data-size="20px"
+              data-weight="regular"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 256 256"><path d="M216,152v56a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V152a8,8,0,0,1,16,0v48H200V152a8,8,0,0,1,16,0Zm-40.49-20.49a8,8,0,0,0-11.32,0L136,160V40a8,8,0,0,0-16,0V160L91.81,131.51a8,8,0,0,0-11.32,11.32l40,40a8,8,0,0,0,11.32,0l40-40A8,8,0,0,0,175.51,131.51Z"></path></svg>
+            </div>
+            <span>Export GeoJSON</span>
+          </button>
           <button
             onClick={handleAddWaypoint}
-            className="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-14 bg-[#0c7ff2] text-slate-50 text-base font-bold leading-normal tracking-[0.015em] min-w-0 px-2 gap-4 pl-4 pr-6"
+            className="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-14 bg-[#0c7ff2] hover:bg-[#0a6ac9] text-slate-50 text-base font-bold leading-normal tracking-[0.015em] min-w-0 px-2 gap-4 pl-4 pr-6"
             data-testid="add-new-waypoint-button"
           >
-            {/* Removed duplicated div here */}
             <div
               className="text-slate-50"
               data-icon="Plus"
@@ -145,6 +183,7 @@ export default function SavedWaypoints() {
                 <path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path>
               </svg>
             </div>
+            {/* Text for Add button can be added here if needed, like the Export button */}
           </button>
         </div>
         <div className="h-5 bg-slate-50"></div>
