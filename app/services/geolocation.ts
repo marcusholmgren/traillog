@@ -45,3 +45,26 @@ export function calculateDistance(
 function toRadians(degrees: number): number {
   return degrees * (Math.PI / 180);
 }
+
+/**
+ * Calculates the total distance of a route defined by an array of waypoints.
+ *
+ * @param route - An array of coordinate points [{ latitude, longitude }].
+ * @returns The total distance of the route in kilometers.
+ */
+export function calculateTotalRouteDistance(route: Coordinates[]): number {
+  // A route with 0 or 1 point has a distance of 0.
+  if (route.length < 2) {
+    return 0;
+  }
+
+  let totalDistance = 0;
+  // Iterate from the first point to the second-to-last point.
+  for (let i = 0; i < route.length - 1; i++) {
+    const point1 = route[i];
+    const point2 = route[i + 1];
+    totalDistance += calculateDistance(point1, point2);
+  }
+
+  return totalDistance;
+}
