@@ -1,5 +1,4 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
-import * as GeoJSON from 'geojson';
 
 export interface Waypoint {
   id: number;
@@ -83,33 +82,39 @@ export async function updateWaypoint(
   return updatedWaypoint;
 }
 
-export async function getWaypointById(id: number): Promise<Waypoint | undefined> {
+export async function getWaypointById(
+  id: number
+): Promise<Waypoint | undefined> {
   const db = await openWaypointsDB();
   return db.get(STORE_NAME, id);
 }
 
-export function waypointsToGeoJSON(waypoints: Waypoint[]): GeoJSON.FeatureCollection<GeoJSON.Point> {
-  const features: GeoJSON.Feature<GeoJSON.Point>[] = waypoints.map(waypoint => {
-    const feature: GeoJSON.Feature<GeoJSON.Point> = {
-      type: "Feature",
-      geometry: {
-        type: "Point",
-        coordinates: [waypoint.longitude, waypoint.latitude]
-      },
-      properties: {
-        id: waypoint.id,
-        name: waypoint.name,
-        createdAt: waypoint.createdAt
+export function waypointsToGeoJSON(
+  waypoints: Waypoint[]
+): GeoJSON.FeatureCollection<GeoJSON.Point> {
+  const features: GeoJSON.Feature<GeoJSON.Point>[] = waypoints.map(
+    (waypoint) => {
+      const feature: GeoJSON.Feature<GeoJSON.Point> = {
+        type: "Feature",
+        geometry: {
+          type: "Point",
+          coordinates: [waypoint.longitude, waypoint.latitude],
+        },
+        properties: {
+          id: waypoint.id,
+          name: waypoint.name,
+          createdAt: waypoint.createdAt,
+        },
+      };
+      if (waypoint.notes !== undefined) {
+        feature.properties.notes = waypoint.notes;
       }
-    };
-    if (waypoint.notes !== undefined) {
-      feature.properties.notes = waypoint.notes;
+      return feature;
     }
-    return feature;
-  });
+  );
 
   return {
     type: "FeatureCollection",
-    features: features
+    features: features,
   };
 }
