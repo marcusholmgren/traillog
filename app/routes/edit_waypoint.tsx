@@ -83,9 +83,10 @@ export default function EditWaypoint() {
       setSuccessMessage("Waypoint updated successfully!");
       // No need to clear capturedImage here as we might want to see it persist if user stays on page
       setTimeout(() => {
-        if (streamRef.current) { // Stop stream if navigating away
-            streamRef.current.getTracks().forEach(track => track.stop());
-            streamRef.current = null;
+        if (streamRef.current) {
+          // Stop stream if navigating away
+          streamRef.current.getTracks().forEach((track) => track.stop());
+          streamRef.current = null;
         }
         setIsCapturing(false);
         navigate(-1);
@@ -135,8 +136,8 @@ export default function EditWaypoint() {
         setIsCapturing(false);
       }
     } else {
-         handleChooseFileClick();
-         setImageError("Live camera not supported. Please choose a file.");
+      handleChooseFileClick();
+      setImageError("Live camera not supported. Please choose a file.");
     }
   };
 
@@ -171,7 +172,7 @@ export default function EditWaypoint() {
 
   const handleCancelCamera = () => {
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
     setIsCapturing(false);
@@ -217,7 +218,9 @@ export default function EditWaypoint() {
       className="relative flex size-full min-h-screen flex-col bg-slate-50 justify-between group/design-root overflow-x-hidden"
     >
       {/* Main content wrapper */}
-      <div className="flex-grow pb-20"> {/* Added padding-bottom to prevent overlap with sticky footer */}
+      <div className="flex-grow pb-20">
+        {" "}
+        {/* Added padding-bottom to prevent overlap with sticky footer */}
         <div className="flex items-center bg-slate-50 p-4 pb-2 justify-between sticky top-0 z-10">
           <button
             type="button"
@@ -239,7 +242,6 @@ export default function EditWaypoint() {
             Edit Waypoint
           </h2>
         </div>
-
         {error && (
           <div className="m-4 p-3 bg-red-100 text-red-700 rounded-md">
             Error: {error}
@@ -250,7 +252,6 @@ export default function EditWaypoint() {
             {successMessage}
           </div>
         )}
-
         {/* Form Fields */}
         <div className="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
           <label className="flex flex-col min-w-40 flex-1">
@@ -303,7 +304,6 @@ export default function EditWaypoint() {
             ></textarea>
           </label>
         </div>
-
         {/* Image Display and Capture Section */}
         <div className="px-4 py-3">
           <p className="text-[#0d141c] text-base font-medium leading-normal pb-2">
@@ -376,53 +376,26 @@ export default function EditWaypoint() {
           </div>
         </div>
         {/* End of Image Display and Capture Section */}
-      </div> {/* End of Main content wrapper */}
-
+      </div>{" "}
+      {/* End of Main content wrapper */}
       {/* Sticky Footer for Save/Cancel Buttons */}
       <div className="sticky bottom-0 left-0 right-0 bg-slate-50 py-3 border-t border-[#e7edf4] z-10">
         <div className="flex flex-1 gap-3 flex-wrap px-4 justify-between">
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="flex min-w-[84px] flex-1 cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-[#e7edf4] text-[#0d141c] text-base font-bold leading-normal tracking-[0.015em]"
-            >
-              <span className="truncate">Cancel</span>
-            </button>
-            <button
-              type="submit"
-              className="flex min-w-[84px] flex-1 cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-[#0c7ff2] text-slate-50 text-base font-bold leading-normal tracking-[0.015em]"
-              disabled={isLoading}
-            >
-              <span className="truncate">Save Waypoint</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleCancel}
+            className="flex min-w-[84px] flex-1 cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-[#e7edf4] text-[#0d141c] text-base font-bold leading-normal tracking-[0.015em]"
+          >
+            <span className="truncate">Cancel</span>
+          </button>
+          <button
+            type="submit"
+            className="flex min-w-[84px] flex-1 cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-[#0c7ff2] text-slate-50 text-base font-bold leading-normal tracking-[0.015em]"
+            disabled={isLoading}
+          >
+            <span className="truncate">Save Waypoint</span>
+          </button>
         </div>
-    </form>
-  );
-}
-// Ensure this is removed or commented out if not used.
-// export const loader: LoaderFunction = async ({ params }) => {
-//   const waypointId = parseInt(params.wpId || "", 10);
-//   if (isNaN(waypointId)) {
-//     throw new Response("Not Found", { status: 404 });
-//   }
-//   const waypoint = await getWaypointById(waypointId);
-//   if (!waypoint) {
-//     throw new Response("Not Found", { status: 404 });
-//   }
-//   return waypoint; // Return type should match what component expects or use json(waypoint)
-// };
-
-                fill="currentColor"
-                viewBox="0 0 256 256"
-              >
-                <path d="M228.92,49.69a8,8,0,0,0-6.86-1.45L160.93,63.52,99.58,32.84a8,8,0,0,0-5.52-.6l-64,16A8,8,0,0,0,24,56V200a8,8,0,0,0,9.94,7.76l61.13-15.28,61.35,30.68A8.15,8.15,0,0,0,160,224a8,8,0,0,0,1.94-.24l64-16A8,8,0,0,0,232,200V56A8,8,0,0,0,228.92,49.69ZM96,176a8,8,0,0,0-1.94.24L40,189.75V62.25L95.07,48.48l.93.46Zm120,17.75-55.07,13.77-.93-.46V80a8,8,0,0,0,1.94-.23L216,66.25Z"></path>
-              </svg>
-            </div>
-          </a>
-          {/* Other nav items can follow */}
-        </div>
-        <div className="h-5 bg-slate-50"></div>
       </div>
     </form>
   );

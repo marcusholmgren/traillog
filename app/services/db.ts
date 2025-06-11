@@ -13,7 +13,7 @@ export interface Waypoint {
 export interface WaypointUpdate {
   name?: string;
   notes?: string;
-  imageDataUrl?: string;
+  imageDataUrl?: string | null;
 }
 
 interface WaypointsDBSchema extends DBSchema {
@@ -83,7 +83,12 @@ export async function updateWaypoint(
   if (updates.notes !== undefined) {
     updatedWaypoint.notes = updates.notes;
   }
-  if (updates.imageDataUrl !== undefined) { // Add this block
+  if (updates.imageDataUrl === null) {
+    // Add this block
+    updatedWaypoint.imageDataUrl = undefined;
+  }
+  if (updates.imageDataUrl !== undefined && updates.imageDataUrl !== null) {
+    // Add this block
     updatedWaypoint.imageDataUrl = updates.imageDataUrl;
   }
 
@@ -118,7 +123,8 @@ export function waypointsToGeoJSON(
       if (waypoint.notes !== undefined) {
         feature.properties.notes = waypoint.notes;
       }
-      if (waypoint.imageDataUrl !== undefined) { // Add this block
+      if (waypoint.imageDataUrl !== undefined) {
+        // Add this block
         feature.properties.imageDataUrl = waypoint.imageDataUrl;
       }
       return feature;

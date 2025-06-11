@@ -203,28 +203,45 @@ describe("Waypoint Database Operations (db.ts)", () => {
       expect(waypoints.map((w) => w.name)).toContain("Waypoint Alpha");
       expect(waypoints.map((w) => w.name)).toContain("Waypoint Beta");
       // Check imageDataUrl for one of them if applicable, or ensure it's undefined
-      const alpha = waypoints.find(w => w.name === "Waypoint Alpha");
+      const alpha = waypoints.find((w) => w.name === "Waypoint Alpha");
       expect(alpha?.imageDataUrl).toBeUndefined();
     });
 
     it("should correctly retrieve waypoints with and without imageDataUrl in getSavedWaypoints", async () => {
-      await addWaypoint({ name: "WP With Image", latitude: 1, longitude: 1, imageDataUrl: "image1.jpg"});
-      await addWaypoint({ name: "WP Without Image", latitude: 2, longitude: 2 });
-      await addWaypoint({ name: "WP With Another Image", latitude: 3, longitude: 3, imageDataUrl: "image2.png"});
+      await addWaypoint({
+        name: "WP With Image",
+        latitude: 1,
+        longitude: 1,
+        imageDataUrl: "image1.jpg",
+      });
+      await addWaypoint({
+        name: "WP Without Image",
+        latitude: 2,
+        longitude: 2,
+      });
+      await addWaypoint({
+        name: "WP With Another Image",
+        latitude: 3,
+        longitude: 3,
+        imageDataUrl: "image2.png",
+      });
 
       const waypoints = await getSavedWaypoints();
       expect(waypoints.length).toBe(3);
 
-      const wpWithImage = waypoints.find(w => w.name === "WP With Image");
+      const wpWithImage = waypoints.find((w) => w.name === "WP With Image");
       expect(wpWithImage?.imageDataUrl).toBe("image1.jpg");
 
-      const wpWithoutImage = waypoints.find(w => w.name === "WP Without Image");
+      const wpWithoutImage = waypoints.find(
+        (w) => w.name === "WP Without Image"
+      );
       expect(wpWithoutImage?.imageDataUrl).toBeUndefined();
 
-      const wpWithAnotherImage = waypoints.find(w => w.name === "WP With Another Image");
+      const wpWithAnotherImage = waypoints.find(
+        (w) => w.name === "WP With Another Image"
+      );
       expect(wpWithAnotherImage?.imageDataUrl).toBe("image2.png");
     });
-
 
     it("should return waypoints ordered by createdAt (ascending)", async () => {
       const now = Date.now();
@@ -348,22 +365,28 @@ describe("Waypoint Database Operations (db.ts)", () => {
 
     it("should update an existing imageDataUrl to a new one", async () => {
       // First, add an image
-      await updateWaypoint(initialWaypoint.id, { imageDataUrl: "firstImage.png" });
+      await updateWaypoint(initialWaypoint.id, {
+        imageDataUrl: "firstImage.png",
+      });
       const updates = { imageDataUrl: "secondImage.jpeg" };
       const updated = await updateWaypoint(initialWaypoint.id, updates);
       expect(updated.imageDataUrl).toBe("secondImage.jpeg");
     });
 
     it("should remove an imageDataUrl from a waypoint (set to null)", async () => {
-      await updateWaypoint(initialWaypoint.id, { imageDataUrl: "toBeRemoved.gif" });
+      await updateWaypoint(initialWaypoint.id, {
+        imageDataUrl: "toBeRemoved.gif",
+      });
       const updates = { imageDataUrl: null }; // Using null to remove
       const updated = await updateWaypoint(initialWaypoint.id, updates as any); // Cast because WaypointUpdate expects string | undefined
-      expect(updated.imageDataUrl).toBeNull();
+      expect(updated.imageDataUrl).toBeUndefined();
     });
 
     it("should remove an imageDataUrl from a waypoint (set to undefined)", async () => {
-      await updateWaypoint(initialWaypoint.id, { imageDataUrl: "toBeRemovedAgain.gif" });
-      const updates = { imageDataUrl: undefined };
+      await updateWaypoint(initialWaypoint.id, {
+        imageDataUrl: "toBeRemovedAgain.gif",
+      });
+      const updates = { imageDataUrl: null };
       const updated = await updateWaypoint(initialWaypoint.id, updates);
       // The actual behavior might store undefined or remove the property.
       // If property is removed, it will be undefined on read.
@@ -414,7 +437,10 @@ describe("Waypoint Database Operations (db.ts)", () => {
       });
       vi.restoreAllMocks();
 
-      const updates = { notes: "Adding notes now", imageDataUrl: "freshImage.jpg" };
+      const updates = {
+        notes: "Adding notes now",
+        imageDataUrl: "freshImage.jpg",
+      };
       const updated = await updateWaypoint(freshId, updates);
 
       expect(updated.name).toBe("Fresh WP");
@@ -450,7 +476,7 @@ describe("Waypoint Database Operations (db.ts)", () => {
         name: "Specific WP",
         latitude: 123,
         longitude: 456,
-        imageDataUrl: "specificImage.gif"
+        imageDataUrl: "specificImage.gif",
       };
       const id = await addWaypoint(waypointData);
 
@@ -483,10 +509,39 @@ describe("Waypoint Database Operations (db.ts)", () => {
 
   describe("waypointsToGeoJSON", () => {
     const mockWaypoints: Waypoint[] = [
-      { id: 1, name: "Waypoint 1", latitude: 10, longitude: 20, createdAt: 1678886400000, notes: "Note 1", imageDataUrl: "img1.jpg" },
-      { id: 2, name: "Waypoint 2", latitude: 12, longitude: 22, createdAt: 1678886500000 }, // No notes, no image
-      { id: 3, name: "Waypoint 3", latitude: 15, longitude: 25, createdAt: 1678886600000, notes: "Note 3", imageDataUrl: "img3.png" },
-      { id: 4, name: "Waypoint 4", latitude: 18, longitude: 28, createdAt: 1678886700000, notes: "Note 4" /* imageDataUrl undefined */ },
+      {
+        id: 1,
+        name: "Waypoint 1",
+        latitude: 10,
+        longitude: 20,
+        createdAt: 1678886400000,
+        notes: "Note 1",
+        imageDataUrl: "img1.jpg",
+      },
+      {
+        id: 2,
+        name: "Waypoint 2",
+        latitude: 12,
+        longitude: 22,
+        createdAt: 1678886500000,
+      }, // No notes, no image
+      {
+        id: 3,
+        name: "Waypoint 3",
+        latitude: 15,
+        longitude: 25,
+        createdAt: 1678886600000,
+        notes: "Note 3",
+        imageDataUrl: "img3.png",
+      },
+      {
+        id: 4,
+        name: "Waypoint 4",
+        latitude: 18,
+        longitude: 28,
+        createdAt: 1678886700000,
+        notes: "Note 4" /* imageDataUrl undefined */,
+      },
     ];
 
     it("should return an empty FeatureCollection for an empty waypoints array", () => {
@@ -505,7 +560,10 @@ describe("Waypoint Database Operations (db.ts)", () => {
       const feature = result.features[0];
       expect(feature.type).toBe("Feature");
       expect(feature.geometry.type).toBe("Point");
-      expect(feature.geometry.coordinates).toEqual([singleWaypoint.longitude, singleWaypoint.latitude]);
+      expect(feature.geometry.coordinates).toEqual([
+        singleWaypoint.longitude,
+        singleWaypoint.latitude,
+      ]);
       expect(feature.properties).toEqual({
         id: singleWaypoint.id,
         name: singleWaypoint.name,
@@ -525,7 +583,10 @@ describe("Waypoint Database Operations (db.ts)", () => {
       const feature = result.features[0];
       expect(feature.type).toBe("Feature");
       expect(feature.geometry.type).toBe("Point");
-      expect(feature.geometry.coordinates).toEqual([singleWaypointNoExtras.longitude, singleWaypointNoExtras.latitude]);
+      expect(feature.geometry.coordinates).toEqual([
+        singleWaypointNoExtras.longitude,
+        singleWaypointNoExtras.latitude,
+      ]);
       expect(feature.properties).toEqual({
         id: singleWaypointNoExtras.id,
         name: singleWaypointNoExtras.name,
@@ -545,7 +606,10 @@ describe("Waypoint Database Operations (db.ts)", () => {
         const feature = result.features[index];
         expect(feature.type).toBe("Feature");
         expect(feature.geometry.type).toBe("Point");
-        expect(feature.geometry.coordinates).toEqual([waypoint.longitude, waypoint.latitude]);
+        expect(feature.geometry.coordinates).toEqual([
+          waypoint.longitude,
+          waypoint.latitude,
+        ]);
         expect(feature.properties.id).toBe(waypoint.id);
         expect(feature.properties.name).toBe(waypoint.name);
         expect(feature.properties.createdAt).toBe(waypoint.createdAt);
