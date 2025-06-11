@@ -7,11 +7,13 @@ export interface Waypoint {
   longitude: number;
   createdAt: number;
   notes?: string;
+  imageDataUrl?: string;
 }
 
 export interface WaypointUpdate {
   name?: string;
   notes?: string;
+  imageDataUrl?: string | null;
 }
 
 interface WaypointsDBSchema extends DBSchema {
@@ -45,7 +47,11 @@ export async function addWaypoint(
 ): Promise<number> {
   const db = await openWaypointsDB();
   const waypoint: Omit<Waypoint, "id"> = {
-    ...waypointData,
+    name: waypointData.name,
+    latitude: waypointData.latitude,
+    longitude: waypointData.longitude,
+    notes: waypointData.notes,
+    imageDataUrl: waypointData.imageDataUrl, // Add imageDataUrl
     createdAt: Date.now(),
   };
   // The `add` method returns the key of the added record.
@@ -76,6 +82,14 @@ export async function updateWaypoint(
   }
   if (updates.notes !== undefined) {
     updatedWaypoint.notes = updates.notes;
+  }
+  if (updates.imageDataUrl === null) {
+    // Add this block
+    updatedWaypoint.imageDataUrl = undefined;
+  }
+  if (updates.imageDataUrl !== undefined && updates.imageDataUrl !== null) {
+    // Add this block
+    updatedWaypoint.imageDataUrl = updates.imageDataUrl;
   }
 
   await db.put(STORE_NAME, updatedWaypoint);
@@ -108,6 +122,10 @@ export function waypointsToGeoJSON(
       };
       if (waypoint.notes !== undefined) {
         feature.properties.notes = waypoint.notes;
+      }
+      if (waypoint.imageDataUrl !== undefined) {
+        // Add this block
+        feature.properties.imageDataUrl = waypoint.imageDataUrl;
       }
       return feature;
     }
