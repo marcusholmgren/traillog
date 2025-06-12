@@ -103,6 +103,16 @@ export async function getWaypointById(
   return db.get(STORE_NAME, id);
 }
 
+export async function deleteWaypoint(id: number): Promise<void> {
+  const db = await openWaypointsDB();
+  await db.delete(STORE_NAME, id);
+}
+
+export async function clearAllWaypoints(): Promise<void> {
+  const db = await openWaypointsDB();
+  await db.clear(STORE_NAME);
+}
+
 export function waypointsToGeoJSON(
   waypoints: Waypoint[]
 ): GeoJSON.FeatureCollection<GeoJSON.Point> {

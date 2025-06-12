@@ -15,6 +15,8 @@ import {
   updateWaypoint,
   getWaypointById,
   waypointsToGeoJSON,
+  deleteWaypoint, // Added import
+  clearAllWaypoints, // Added import
 } from "./db"; // Assuming db.ts is in the same directory for simplicity here, adjust if needed
 
 // --- Vitest Setup for fake-indexeddb ---
@@ -648,6 +650,115 @@ describe("Waypoint Database Operations (db.ts)", () => {
       });
       expect(feature.properties).not.toHaveProperty("notes");
       expect(feature.properties).not.toHaveProperty("imageDataUrl");
+    });
+  });
+
+  describe("deleteWaypoint", () => {
+    let wp1Id: number, wp2Id: number;
+    const wp1Data = { name: "WP to Delete", latitude: 1, longitude: 1 };
+    const wp2Data = { name: "WP to Keep", latitude: 2, longitude: 2 };
+
+    beforeEach(async () => {
+      // Add some waypoints before each test in this describe block
+      wp1Id = await addWaypoint(wp1Data);
+      wp2Id = await addWaypoint(wp2Data);
+    });
+
+    it("should delete a specific waypoint and leave others intact", async () => {
+      let waypoints = await getSavedWaypoints();
+      expect(waypoints.length).toBe(2); // Verify initial state
+
+      await deleteWaypoint(wp1Id);
+
+      const deletedWaypoint = await getWaypointById(wp1Id);
+      expect(deletedWaypoint).toBeUndefined();
+
+      const remainingWaypoint = await getWaypointById(wp2Id);
+      expect(remainingWaypoint).toBeDefined();
+      expect(remainingWaypoint!.name).toBe(wp2Data.name);
+
+      waypoints = await getSavedWaypoints();
+      expect(waypoints.length).toBe(1);
+      expect(waypoints[0].id).toBe(wp2Id);
+    });
+
+    it("should not throw an error when trying to delete a non-existent waypoint", async () => {
+      const nonExistentId = 999;
+      await expect(deleteWaypoint(nonExistentId)).resolves.not.toThrow();
+
+      // Verify that existing waypoints are unaffected
+      const waypoints = await getSavedWaypoints();
+      expect(waypoints.length).toBe(2); // Still 2 waypoints
+      const foundWp1 = waypoints.find(wp => wp.id === wp1Id);
+      const foundWp2 = waypoints.find(wp => wp.id === wp2Id);
+      expect(foundWp1).toBeDefined();
+      expect(foundWp2).toBeDefined();
+    });
+
+    it("should correctly delete a waypoint even if it's the only one", async () => {
+      // First, clear the two waypoints added in beforeEach
+      await deleteWaypoint(wp1Id);
+      await deleteWaypoint(wp2Id);
+
+      // Add a single waypoint
+      const singleWpId = await addWaypoint({ name: "Single WP", latitude: 3, longitude: 3 });
+      let waypoints = await getSavedWaypoints();
+      expect(waypoints.length).toBe(1);
+      expect(waypoints[0].id).toBe(singleWpId);
+
+      await deleteWaypoint(singleWpId);
+
+      const deletedSingleWaypoint = await getWaypointById(singleWpId);
+      expect(deletedSingleWaypoint).toBeUndefined();
+
+      waypoints = await getSavedWaypoints();
+      expect(waypoints.length).toBe(0);
+    });
+  });
+
+  describe("clearAllWaypoints", () => {
+    const wpData1 = { name: "WP Clear 1", latitude: 10, longitude: 10 };
+    const wpData2 = { name: "WP Clear 2", latitude: 20, longitude: 20 };
+    const wpData3 = { name: "WP Clear 3", latitude: 30, longitude: 30 };
+
+    it("should remove all waypoints from the database", async () => {
+      await addWaypoint(wpData1);
+      await addWaypoint(wpData2);
+      await addWaypoint(wpData3);
+
+      let waypoints = await getSavedWaypoints();
+      expect(waypoints.length).toBe(3); // Verify initial state
+
+      await clearAllWaypoints();
+
+      waypoints = await getSavedWaypoints();
+      expect(waypoints.length).toBe(0);
+      expect(waypoints).toEqual([]);
+    });
+
+    it("should execute without error if the store is already empty", async () => {
+      let waypoints = await getSavedWaypoints();
+      expect(waypoints.length).toBe(0); // Ensure store is empty
+
+      await expect(clearAllWaypoints()).resolves.not.toThrow();
+
+      waypoints = await getSavedWaypoints();
+      expect(waypoints.length).toBe(0);
+    });
+
+    it("should leave the store empty if called after adding and then clearing waypoints", async () => {
+      await addWaypoint(wpData1);
+      await addWaypoint(wpData2);
+
+      await clearAllWaypoints(); // First clear
+
+      let waypoints = await getSavedWaypoints();
+      expect(waypoints.length).toBe(0);
+
+      await clearAllWaypoints(); // Second clear on already empty store
+
+      waypoints = await getSavedWaypoints();
+      expect(waypoints.length).toBe(0);
     });
   });
 });
