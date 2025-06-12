@@ -50,6 +50,32 @@ export default function SavedWaypoints() {
     }
   };
 
+  const handleShareWaypoint = async (waypoint: Waypoint) => {
+    const shareText = `Waypoint: ${waypoint.name} - Lat: ${waypoint.latitude.toFixed(4)}, Lon: ${waypoint.longitude.toFixed(4)}`;
+    const shareTitle = `Share Waypoint: ${waypoint.name}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+        });
+        console.log("Waypoint shared successfully");
+        // Optionally, set a success message for sharing
+        // setSuccessMessage("Waypoint shared!");
+      } catch (error) {
+        console.error("Error sharing waypoint:", error);
+        // setError("Failed to share waypoint. Please try again or check browser permissions.");
+        // Alerting for now as setError might be overwritten by other operations quickly
+        alert("Error sharing: " + (error as Error).message);
+      }
+    } else {
+      console.warn("Web Share API not supported in this browser.");
+      alert("Web Share API is not supported in your browser. Try copying the details manually.");
+      // Fallback perhaps: copy to clipboard or show a modal with the text
+    }
+  };
+
   const handleDeleteAllData = async () => {
     setSuccessMessage(null); // Clear previous messages
     setError(null);
@@ -182,6 +208,14 @@ export default function SavedWaypoints() {
                   aria-label={`Delete ${waypoint.name}`}
                 >
                   Delete
+                </button>
+                <button
+                  onClick={() => handleShareWaypoint(waypoint)}
+                  className="ml-2 flex-shrink-0 px-3 py-1.5 text-sm font-medium text-white bg-green-500 hover:bg-green-600 rounded-md shadow-sm transition-colors"
+                  data-testid={`share-waypoint-button-${waypoint.id}`}
+                  aria-label={`Share ${waypoint.name}`}
+                >
+                  Share
                 </button>
               </div>
             ))}
