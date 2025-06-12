@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate, NavLink } from "react-router"; // Import Link
-import { getSavedWaypoints, type Waypoint, waypointsToGeoJSON } from "../services/db";
+import { getSavedWaypoints, type Waypoint, waypointsToGeoJSON, deleteWaypoint, clearAllWaypoints } from "../services/db";
 import { data } from "react-router";
 
 export default function SavedWaypoints() {
   const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null); // Added success message state
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,6 +33,36 @@ export default function SavedWaypoints() {
 
   const handleAddWaypoint = () => {
     navigate("/add-waypoint"); // Navigate to add waypoint page
+  };
+
+  const handleDeleteWaypoint = async (id: number) => {
+    if (window.confirm("Are you sure you want to delete this waypoint?")) {
+      try {
+        await deleteWaypoint(id);
+        setWaypoints(prevWaypoints => prevWaypoints.filter(wp => wp.id !== id));
+        // Optionally: set a success message or log
+        console.log(`Waypoint ${id} deleted successfully.`);
+      } catch (err) {
+        console.error("Error deleting waypoint:", err);
+        setError("Failed to delete waypoint. Please try again.");
+        setSuccessMessage(null); // Clear success message on new error
+      }
+    }
+  };
+
+  const handleDeleteAllData = async () => {
+    setSuccessMessage(null); // Clear previous messages
+    setError(null);
+    if (window.confirm("Are you sure you want to delete ALL waypoint data? This action cannot be undone.")) {
+      try {
+        await clearAllWaypoints();
+        setWaypoints([]);
+        setSuccessMessage("All waypoint data has been successfully deleted.");
+      } catch (err) {
+        console.error("Error clearing all waypoints:", err);
+        setError("Failed to delete all waypoint data. Please try again.");
+      }
+    }
   };
 
   const handleExportToGeoJSON = async () => {
@@ -90,8 +121,9 @@ export default function SavedWaypoints() {
           <p className="p-4 text-center text-[#0d141c]">Loading waypoints...</p>
         )}
         {error && <p className="p-4 text-center text-red-500">{error}</p>}
+        {successMessage && <p className="p-4 text-center text-green-500">{successMessage}</p>} {/* Display success message */}
 
-        {!isLoading && !error && waypoints.length === 0 && (
+        {!isLoading && !error && !successMessage && waypoints.length === 0 && (
           <p className="p-4 text-center text-[#49739c]">
             No waypoints saved yet.
           </p>
@@ -144,6 +176,13 @@ export default function SavedWaypoints() {
                 >
                   Edit
                 </NavLink>
+                <button
+                  onClick={() => handleDeleteWaypoint(waypoint.id)}
+                  className="ml-2 flex-shrink-0 px-3 py-1.5 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-md shadow-sm transition-colors"
+                  aria-label={`Delete ${waypoint.name}`}
+                >
+                  Delete
+                </button>
               </div>
             ))}
           </div>
@@ -152,9 +191,7 @@ export default function SavedWaypoints() {
       <div className="mt-auto">
         {" "}
         {/* Ensures buttons are at the bottom */}
-        <div className="flex justify-between items-center overflow-hidden px-5 pb-5 pt-2">
-          {" "}
-          {/* Changed to justify-between and items-center */}
+        <div className="flex flex-wrap justify-center items-center gap-4 px-5 pb-5 pt-2"> {/* Adjusted for wrapping and centering */}
           <button
             onClick={handleExportToGeoJSON}
             className="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-14 bg-slate-600 hover:bg-slate-700 text-slate-50 text-base font-bold leading-normal tracking-[0.015em] min-w-0 px-4 gap-2"
@@ -171,8 +208,15 @@ export default function SavedWaypoints() {
             <span>Export GeoJSON</span>
           </button>
           <button
+            onClick={handleDeleteAllData}
+            className="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-14 bg-red-600 hover:bg-red-700 text-slate-50 text-base font-bold leading-normal tracking-[0.015em] min-w-0 px-4 gap-2"
+            data-testid="delete-all-data-button"
+          >
+            <span>Delete All Data</span>
+          </button>
+          <button
             onClick={handleAddWaypoint}
-            className="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-14 bg-[#0c7ff2] hover:bg-[#0a6ac9] text-slate-50 text-base font-bold leading-normal tracking-[0.015em] min-w-0 px-2 gap-4 pl-4 pr-6"
+            className="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-14 bg-[#0c7ff2] hover:bg-[#0a6ac9] text-slate-50 text-base font-bold leading-normal tracking-[0.015em] min-w-0 px-2 gap-4 pl-4 pr-6 order-first sm:order-none" // Order first on small screens
             data-testid="add-new-waypoint-button"
           >
             <div
