@@ -68,9 +68,15 @@ export default function SavedWaypoints() {
 
     if (navigator.share) {
       try {
+        const geojsonData = waypointsToGeoJSON([waypoint]);
+        const geojsonString = JSON.stringify(geojsonData);
+        const fileName = `${waypoint.name}.geojson`;
+        const file = new File([geojsonString], fileName, { type: "application/geo+json" });
+
         await navigator.share({
           title: shareTitle,
           text: shareText,
+          files: [file],
         });
         console.log("Waypoint shared successfully");
         // Optionally, set a success message for sharing
