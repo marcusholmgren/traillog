@@ -41,11 +41,18 @@ export function Welcome() {
               ))}
             </ul>
           </nav>
-          <div>
-            <NavLink to="/waypoints" className="py-3">
-              Lista waypoints
-            </NavLink>
-            <NavLink to="/waypoints/add">Lägg till waypoint</NavLink>
+          <div className="py-3">
+            <div className="grid grid-cols-2 gap-4">
+              <NavLink to="/map" viewTransition>
+                Karta
+              </NavLink>
+              <NavLink to="/waypoints" viewTransition>
+                Lista waypoints
+              </NavLink>
+              <NavLink to="/waypoints/add" viewTransition>
+                Lägg till waypoint
+              </NavLink>
+            </div>
           </div>
         </div>
       </div>

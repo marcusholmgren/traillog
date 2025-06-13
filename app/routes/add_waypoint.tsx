@@ -87,7 +87,7 @@ export default function AddWaypoint() {
       streamRef.current = null;
     }
     setIsCapturing(false);
-    navigate(-1); // Go back to the previous page
+    navigate(-1, { viewTransition: true }); // Go back to the previous page
   };
 
   const handleCaptureImageClick = async () => {
@@ -184,13 +184,12 @@ export default function AddWaypoint() {
 
   const handleCancelCamera = () => {
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
     setIsCapturing(false);
     setImageError(null); // Clear any camera related errors
   };
-
 
   return (
     // Changed div to form and added onSubmit and flex properties
@@ -271,13 +270,11 @@ export default function AddWaypoint() {
             />
           </label>
         </div>
-
         {error && <p className="text-red-500 px-4 py-2">{error}</p>}
         {imageError && <p className="text-red-500 px-4 py-2">{imageError}</p>}
         {successMessage && (
           <p className="text-green-500 px-4 py-2">{successMessage}</p>
         )}
-
         {isCapturing && (
           <div className="fixed inset-0 bg-black bg-opacity-75 flex flex-col items-center justify-center z-50 p-4">
             <video
@@ -305,7 +302,6 @@ export default function AddWaypoint() {
             </div>
           </div>
         )}
-
         <div className="flex w-full grow bg-slate-50 @container py-3 px-4">
           {capturedImage ? (
             <img
@@ -322,7 +318,6 @@ export default function AddWaypoint() {
             </div>
           )}
         </div>
-
         <div className="flex px-4 py-3 justify-start gap-2">
           <button
             type="button"
@@ -347,10 +342,11 @@ export default function AddWaypoint() {
             </div>
             <span className="truncate">Open Camera</span>
           </button>
-           {/* Button to trigger fallback file input explicitly */}
+          {/* Button to trigger fallback file input explicitly */}
           <button
             type="button"
-            onClick={() => { // Simplified direct call to file input logic
+            onClick={() => {
+              // Simplified direct call to file input logic
               setImageError(null);
               const input = document.createElement("input");
               input.type = "file";
@@ -364,7 +360,9 @@ export default function AddWaypoint() {
                   reader.onloadend = () => {
                     setCapturedImage(reader.result as string);
                     setImageError(null);
-                    setSuccessMessage("Image selected. You can now save the waypoint.");
+                    setSuccessMessage(
+                      "Image selected. You can now save the waypoint."
+                    );
                   };
                   reader.onerror = () => {
                     setImageError("Failed to read image file.");

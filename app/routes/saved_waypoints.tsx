@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate, NavLink } from "react-router"; // Import Link
-import { getSavedWaypoints, type Waypoint, waypointsToGeoJSON, deleteWaypoint, clearAllWaypoints } from "../services/db";
+import {
+  getSavedWaypoints,
+  type Waypoint,
+  waypointsToGeoJSON,
+  deleteWaypoint,
+  clearAllWaypoints,
+} from "../services/db";
 import { data } from "react-router";
 
 export default function SavedWaypoints() {
@@ -28,18 +34,20 @@ export default function SavedWaypoints() {
   }, []);
 
   const handleNavigateBack = () => {
-    navigate(-1); // Go back to the previous page
+    navigate(-1, { viewTransition: true }); // Go back to the previous page
   };
 
   const handleAddWaypoint = () => {
-    navigate("/add-waypoint"); // Navigate to add waypoint page
+    navigate("/add-waypoint", { viewTransition: true }); // Navigate to add waypoint page
   };
 
   const handleDeleteWaypoint = async (id: number) => {
     if (window.confirm("Are you sure you want to delete this waypoint?")) {
       try {
         await deleteWaypoint(id);
-        setWaypoints(prevWaypoints => prevWaypoints.filter(wp => wp.id !== id));
+        setWaypoints((prevWaypoints) =>
+          prevWaypoints.filter((wp) => wp.id !== id)
+        );
         // Optionally: set a success message or log
         console.log(`Waypoint ${id} deleted successfully.`);
       } catch (err) {
@@ -51,7 +59,11 @@ export default function SavedWaypoints() {
   };
 
   const handleShareWaypoint = async (waypoint: Waypoint) => {
-    const shareText = `Waypoint: ${waypoint.name} - Lat: ${waypoint.latitude.toFixed(4)}, Lon: ${waypoint.longitude.toFixed(4)}`;
+    const shareText = `Waypoint: ${
+      waypoint.name
+    } - Lat: ${waypoint.latitude.toFixed(4)}, Lon: ${waypoint.longitude.toFixed(
+      4
+    )}`;
     const shareTitle = `Share Waypoint: ${waypoint.name}`;
 
     if (navigator.share) {
@@ -71,7 +83,9 @@ export default function SavedWaypoints() {
       }
     } else {
       console.warn("Web Share API not supported in this browser.");
-      alert("Web Share API is not supported in your browser. Try copying the details manually.");
+      alert(
+        "Web Share API is not supported in your browser. Try copying the details manually."
+      );
       // Fallback perhaps: copy to clipboard or show a modal with the text
     }
   };
@@ -79,7 +93,11 @@ export default function SavedWaypoints() {
   const handleDeleteAllData = async () => {
     setSuccessMessage(null); // Clear previous messages
     setError(null);
-    if (window.confirm("Are you sure you want to delete ALL waypoint data? This action cannot be undone.")) {
+    if (
+      window.confirm(
+        "Are you sure you want to delete ALL waypoint data? This action cannot be undone."
+      )
+    ) {
       try {
         await clearAllWaypoints();
         setWaypoints([]);
@@ -142,19 +160,19 @@ export default function SavedWaypoints() {
             Waypoints
           </h2>
         </div>
-
         {isLoading && (
           <p className="p-4 text-center text-[#0d141c]">Loading waypoints...</p>
         )}
         {error && <p className="p-4 text-center text-red-500">{error}</p>}
-        {successMessage && <p className="p-4 text-center text-green-500">{successMessage}</p>} {/* Display success message */}
-
+        {successMessage && (
+          <p className="p-4 text-center text-green-500">{successMessage}</p>
+        )}{" "}
+        {/* Display success message */}
         {!isLoading && !error && !successMessage && waypoints.length === 0 && (
           <p className="p-4 text-center text-[#49739c]">
             No waypoints saved yet.
           </p>
         )}
-
         {!isLoading && !error && waypoints.length > 0 && (
           <div className="overflow-y-auto">
             {" "}
@@ -225,7 +243,9 @@ export default function SavedWaypoints() {
       <div className="mt-auto">
         {" "}
         {/* Ensures buttons are at the bottom */}
-        <div className="flex flex-wrap justify-center items-center gap-4 px-5 pb-5 pt-2"> {/* Adjusted for wrapping and centering */}
+        <div className="flex flex-wrap justify-center items-center gap-4 px-5 pb-5 pt-2">
+          {" "}
+          {/* Adjusted for wrapping and centering */}
           <button
             onClick={handleExportToGeoJSON}
             className="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-14 bg-slate-600 hover:bg-slate-700 text-slate-50 text-base font-bold leading-normal tracking-[0.015em] min-w-0 px-4 gap-2"
@@ -237,7 +257,15 @@ export default function SavedWaypoints() {
               data-size="20px"
               data-weight="regular"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 256 256"><path d="M216,152v56a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V152a8,8,0,0,1,16,0v48H200V152a8,8,0,0,1,16,0Zm-40.49-20.49a8,8,0,0,0-11.32,0L136,160V40a8,8,0,0,0-16,0V160L91.81,131.51a8,8,0,0,0-11.32,11.32l40,40a8,8,0,0,0,11.32,0l40-40A8,8,0,0,0,175.51,131.51Z"></path></svg>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20px"
+                height="20px"
+                fill="currentColor"
+                viewBox="0 0 256 256"
+              >
+                <path d="M216,152v56a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V152a8,8,0,0,1,16,0v48H200V152a8,8,0,0,1,16,0Zm-40.49-20.49a8,8,0,0,0-11.32,0L136,160V40a8,8,0,0,0-16,0V160L91.81,131.51a8,8,0,0,0-11.32,11.32l40,40a8,8,0,0,0,11.32,0l40-40A8,8,0,0,0,175.51,131.51Z"></path>
+              </svg>
             </div>
             <span>Export GeoJSON</span>
           </button>

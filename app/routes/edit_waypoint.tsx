@@ -89,7 +89,7 @@ export default function EditWaypoint() {
           streamRef.current = null;
         }
         setIsCapturing(false);
-        navigate(-1);
+        navigate(-1, { viewTransition: true });
       }, 1500);
     } catch (err) {
       setError(
@@ -104,7 +104,7 @@ export default function EditWaypoint() {
       streamRef.current = null;
     }
     setIsCapturing(false);
-    navigate(-1); // Go back to the previous page
+    navigate(-1, { viewTransition: true }); // Go back to the previous page
   };
 
   // Image capture logic (similar to AddWaypoint)
