@@ -1,8 +1,19 @@
 import React, { useEffect, useState, Suspense } from "react";
 import L from "leaflet";
 // Added GeoJSON import
-import { MapContainer, Marker, TileLayer, useMap, Popup, GeoJSON } from "react-leaflet";
-import { getSavedWaypoints, waypointsToGeoJSON, type Waypoint } from "../services/db"; // Import db services
+import {
+  MapContainer,
+  Marker,
+  TileLayer,
+  useMap,
+  Popup,
+  GeoJSON,
+} from "react-leaflet";
+import {
+  getSavedWaypoints,
+  waypointsToGeoJSON,
+  type Waypoint,
+} from "../services/db"; // Import db services
 import type { Feature, Point } from "geojson"; // Import GeoJSON types
 
 // Fix for default icon issue with webpack
@@ -92,7 +103,9 @@ function ActualMap({ userPosition }: { userPosition: UserPosition }) {
     async function fetchAndSetWaypoints() {
       try {
         const waypoints = await getSavedWaypoints();
-        const geojsonData = waypointsToGeoJSON(waypoints) as GeoJSON.FeatureCollection<GeoJSON.Point, Waypoint>;
+        const geojsonData = waypointsToGeoJSON(
+          waypoints
+        ) as GeoJSON.FeatureCollection<GeoJSON.Point, Waypoint>;
         setWaypointsGeoJSON(geojsonData);
       } catch (error) {
         console.error("Failed to load waypoints for map:", error);
@@ -102,7 +115,10 @@ function ActualMap({ userPosition }: { userPosition: UserPosition }) {
     fetchAndSetWaypoints();
   }, []);
 
-  const onEachWaypointFeature = (feature: Feature<Point, Waypoint>, layer: L.Layer) => {
+  const onEachWaypointFeature = (
+    feature: Feature<Point, Waypoint>,
+    layer: L.Layer
+  ) => {
     if (feature.properties) {
       let popupContent = `<b>${feature.properties.name}</b>`;
       if (feature.properties.notes) {
@@ -112,12 +128,19 @@ function ActualMap({ userPosition }: { userPosition: UserPosition }) {
         popupContent += `<br /><img src="${feature.properties.imageDataUrl}" alt="${feature.properties.name} image" style="max-width: 150px; max-height: 100px; object-fit: cover; margin-top: 5px; border-radius: 4px;" />`;
       }
       // Add edit link
-      popupContent += `<br /><a href="/waypoints/edit/${feature.properties.id}" target="_blank" rel="noopener noreferrer">Edit Waypoint</a>`;
+      popupContent += `<br /><a href="${
+        import.meta.env.BASE_URL
+      }waypoints/edit/${
+        feature.properties.id
+      }" target="_blank" rel="noopener noreferrer">Edit Waypoint</a>`;
       layer.bindPopup(popupContent);
     }
   };
 
-  const centerPosition = [userPosition.latitude, userPosition.longitude] as [number, number];
+  const centerPosition = [userPosition.latitude, userPosition.longitude] as [
+    number,
+    number
+  ];
 
   return (
     <MapContainer
@@ -136,7 +159,10 @@ function ActualMap({ userPosition }: { userPosition: UserPosition }) {
         </Popup>
       </Marker>
       {waypointsGeoJSON && (
-        <GeoJSON data={waypointsGeoJSON} onEachFeature={onEachWaypointFeature} />
+        <GeoJSON
+          data={waypointsGeoJSON}
+          onEachFeature={onEachWaypointFeature}
+        />
       )}
     </MapContainer>
   );
