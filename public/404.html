@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Page Not Found - Redirecting...</title>
+  <script type="text/javascript">
+    // Determine the base path. Assumes the site is served from a subdirectory
+    // that matches the BASE_URL environment variable used during build.
+    // For example, if your repo is 'my-repo', BASE_URL would be '/my-repo/'.
+    // If served from root, base_path should be '/'.
+    // We'll try to infer this from the current URL if not explicitly set,
+    // but for GitHub Pages, it's usually the repository name.
+    const repoName = window.location.pathname.match(/^\/([^\/]+)/) ? window.location.pathname.match(/^\/([^\/]+)/)[1] : '';
+    const base_path = repoName ? '/' + repoName + '/' : '/';
+
+    // Get the full path from the address bar, e.g., /my-repo/edit/1
+    const fullPath = window.location.pathname;
+
+    // Remove the base_path prefix to get the SPA-internal path, e.g., /edit/1
+    // Ensure we don't get a double slash if fullPath is the same as base_path
+    let spaPath = fullPath.startsWith(base_path) ? fullPath.substring(base_path.length) : fullPath;
+    if (spaPath.startsWith('/')) {
+        spaPath = spaPath.substring(1); // Remove leading slash if present
+    }
+
+    // Construct the redirect URL. We'll pass the path as a query parameter.
+    // index.html will need to be able to read this.
+    // Alternatively, use sessionStorage or hash fragments.
+    // Using a query parameter `p` for the path.
+    const redirectUrl = base_path + 'index.html?p=/' + spaPath + window.location.search + window.location.hash;
+
+    // Perform the redirect
+    window.location.replace(redirectUrl);
+  </script>
+</head>
+<body>
+  <p>If you are not redirected automatically, please <a id="redirect-link" href="#">click here</a>.</p>
+  <script type="text/javascript">
+    // Update the link href just in case the script redirect fails
+    document.getElementById('redirect-link').href = redirectUrl;
+  </script>
+</body>
+</html>
