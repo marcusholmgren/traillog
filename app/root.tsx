@@ -13,6 +13,7 @@ import { useEffect } from "react";
 import type { Route } from "./+types/root";
 import "./app.css";
 import "./leaflet-styles.css";
+import {ApplicationLayout} from "~/application-layout";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -25,6 +26,19 @@ export const links: Route.LinksFunction = () => [
     rel: "stylesheet",
     href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
   },
+  {
+    rel: "preconnect",
+    href: "https://rsms.me/",
+  },
+  {
+    rel: "stylesheet",
+    href: "https://rsms.me/inter/inter.css",
+  },
+  // { rel: "stylesheet", href: "/leaflet/leaflet.css" },
+  // { rel: "stylesheet", href: "/leaflet/leaflet.markercluster.css" },
+  // { rel: "stylesheet", href: "/leaflet/leaflet.markercluster.default.css" },
+  // { rel: "stylesheet", href: "/leaflet/leaflet.awesome-markers.css" },
+  // { rel: "stylesheet", href: "/leaflet/leaflet.fullscreen.css" },
 ];
 
 // Component to handle path redirection from 404.html for SPA routing on GitHub Pages
@@ -49,7 +63,10 @@ function PathRedirectHandler() {
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html
+        lang="en"
+        className="text-zinc-950 antialiased lg:bg-zinc-100 dark:bg-zinc-900 dark:text-white dark:lg:bg-zinc-950"
+    >
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -58,7 +75,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <PathRedirectHandler />
-        {children}
+        <ApplicationLayout>
+          {children}
+        </ApplicationLayout>
         <ScrollRestoration />
         <Scripts />
       </body>

@@ -10,8 +10,11 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.4",
+    "@heroicons/react": "^2.2.0",
     "@react-router/node": "^7.5.3",
     "@react-router/serve": "^7.5.3",
+    "framer-motion": "^12.18.1",
     "idb": "^8.0.3",
     "isbot": "^5.1.27",
     "leaflet": "^1.9.4",
@@ -22,7 +25,7 @@
   },
   "devDependencies": {
     "@react-router/dev": "^7.5.3",
-    "@tailwindcss/vite": "^4.1.4",
+    "@tailwindcss/vite": "^4.1.10",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@types/geojson": "^7946.0.16",
@@ -36,7 +39,7 @@
     "jest-environment-jsdom": "^30.0.0",
     "jsdom": "^26.1.0",
     "react-router-dom": "^7.6.2",
-    "tailwindcss": "^4.1.4",
+    "tailwindcss": "^4.1.10",
     "typescript": "^5.8.3",
     "vite": "^6.3.3",
     "vite-tsconfig-paths": "^5.1.4",
