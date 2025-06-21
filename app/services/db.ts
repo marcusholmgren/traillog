@@ -5,6 +5,7 @@ export interface Waypoint {
   name: string;
   latitude: number;
   longitude: number;
+  altitude?: number;
   createdAt: number;
   notes?: string;
   imageDataUrl?: string;
@@ -12,6 +13,7 @@ export interface Waypoint {
 
 export interface WaypointUpdate {
   name?: string;
+  altitude?: number;
   notes?: string;
   imageDataUrl?: string | null;
 }
@@ -50,6 +52,7 @@ export async function addWaypoint(
     name: waypointData.name,
     latitude: waypointData.latitude,
     longitude: waypointData.longitude,
+    altitude: waypointData.altitude,
     notes: waypointData.notes,
     imageDataUrl: waypointData.imageDataUrl, // Add imageDataUrl
     createdAt: Date.now(),
@@ -79,6 +82,9 @@ export async function updateWaypoint(
   const updatedWaypoint = { ...waypoint };
   if (updates.name !== undefined) {
     updatedWaypoint.name = updates.name;
+  }
+  if (updates.altitude !== undefined) {
+    updatedWaypoint.altitude = updates.altitude;
   }
   if (updates.notes !== undefined) {
     updatedWaypoint.notes = updates.notes;
@@ -118,11 +124,15 @@ export function waypointsToGeoJSON(
 ): GeoJSON.FeatureCollection<GeoJSON.Point> {
   const features: GeoJSON.Feature<GeoJSON.Point>[] = waypoints.map(
     (waypoint) => {
+      const coordinates: GeoJSON.Position = waypoint.altitude !== undefined
+        ? [waypoint.longitude, waypoint.latitude, waypoint.altitude]
+        : [waypoint.longitude, waypoint.latitude];
+
       const feature: GeoJSON.Feature<GeoJSON.Point> = {
         type: "Feature",
         geometry: {
           type: "Point",
-          coordinates: [waypoint.longitude, waypoint.latitude],
+          coordinates: coordinates,
         },
         properties: {
           id: waypoint.id,
@@ -130,6 +140,9 @@ export function waypointsToGeoJSON(
           createdAt: waypoint.createdAt,
         },
       };
+      if (waypoint.altitude !== undefined) {
+        feature.properties.altitude = waypoint.altitude;
+      }
       if (waypoint.notes !== undefined) {
         feature.properties.notes = waypoint.notes;
       }

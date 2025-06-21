@@ -135,6 +135,23 @@ describe("Waypoint Database Operations (db.ts)", () => {
       expect(savedWaypoint.createdAt).toBeGreaterThanOrEqual(startTime);
       expect(savedWaypoint.createdAt).toBeLessThanOrEqual(Date.now() + 100); // Added a small buffer for time check
       expect(savedWaypoint.imageDataUrl).toBeUndefined(); // Explicitly check for imageDataUrl
+      expect(savedWaypoint.altitude).toBeUndefined(); // Check altitude
+    });
+
+    it("should add a waypoint with altitude", async () => {
+      const waypointData = {
+        name: "Test Point with Altitude",
+        latitude: 12,
+        longitude: 22,
+        altitude: 100,
+      };
+      const generatedId = await addWaypoint(waypointData);
+      const dbVerify = await openDB(TEST_DB_INTERNAL_NAME, 1);
+      const savedWaypoint = await dbVerify.get(STORE_NAME, generatedId);
+      dbVerify.close();
+
+      expect(savedWaypoint).toBeDefined();
+      expect(savedWaypoint.altitude).toBe(waypointData.altitude);
     });
 
     it("should add a waypoint with an imageDataUrl", async () => {
@@ -470,9 +487,62 @@ describe("Waypoint Database Operations (db.ts)", () => {
       expect(updated.longitude).toBe(initialWaypoint.longitude);
       expect(updated.createdAt).toBe(initialWaypoint.createdAt);
     });
+
+    it("should add altitude to a waypoint that doesn't have it", async () => {
+      expect(initialWaypoint.altitude).toBeUndefined(); // Pre-condition
+      const updates = { altitude: 50 };
+      const updated = await updateWaypoint(initialWaypoint.id, updates);
+      expect(updated.altitude).toBe(50);
+      expect(updated.name).toBe(initialWaypoint.name); // Other fields remain
+    });
+
+    it("should update an existing altitude", async () => {
+      // First, add altitude
+      await updateWaypoint(initialWaypoint.id, { altitude: 75 });
+      const updates = { altitude: 150 };
+      const updated = await updateWaypoint(initialWaypoint.id, updates);
+      expect(updated.altitude).toBe(150);
+    });
+
+    it("should remove altitude from a waypoint (set to undefined)", async () => {
+      await updateWaypoint(initialWaypoint.id, { altitude: 200 });
+      const updates = { altitude: undefined };
+      const updated = await updateWaypoint(initialWaypoint.id, updates);
+      expect(updated.altitude).toBeUndefined();
+    });
+
+    it("should remove altitude from a waypoint (set to null, should be stored as undefined)", async () => {
+      await updateWaypoint(initialWaypoint.id, { altitude: 225 });
+      const updates = { altitude: null as any }; // DB schema expects number | undefined
+      const updated = await updateWaypoint(initialWaypoint.id, updates);
+      expect(updated.altitude).toBeUndefined();
+    });
+
+    it("should preserve altitude when updating other fields like notes", async () => {
+      const altitudeValue = 123;
+      await updateWaypoint(initialWaypoint.id, { altitude: altitudeValue });
+      const updates = { notes: "Altitude should persist" };
+      const updated = await updateWaypoint(initialWaypoint.id, updates);
+      expect(updated.notes).toBe(updates.notes);
+      expect(updated.altitude).toBe(altitudeValue);
+    });
   });
 
   describe("getWaypointById", () => {
+    it("should retrieve a specific waypoint by its ID including altitude if present", async () => {
+      const waypointData = {
+        name: "Specific WP with Altitude",
+        latitude: 123,
+        longitude: 456,
+        altitude: 50,
+        imageDataUrl: "specificImage.gif",
+      };
+      const id = await addWaypoint(waypointData);
+      const fetchedWaypoint = await getWaypointById(id);
+      expect(fetchedWaypoint).toBeDefined();
+      expect(fetchedWaypoint!.altitude).toBe(50);
+    });
+
     it("should retrieve a specific waypoint by its ID", async () => {
       const waypointData = {
         name: "Specific WP",
@@ -516,6 +586,7 @@ describe("Waypoint Database Operations (db.ts)", () => {
         name: "Waypoint 1",
         latitude: 10,
         longitude: 20,
+        altitude: 100,
         createdAt: 1678886400000,
         notes: "Note 1",
         imageDataUrl: "img1.jpg",
@@ -525,6 +596,7 @@ describe("Waypoint Database Operations (db.ts)", () => {
         name: "Waypoint 2",
         latitude: 12,
         longitude: 22,
+        // No altitude
         createdAt: 1678886500000,
       }, // No notes, no image
       {
@@ -532,6 +604,7 @@ describe("Waypoint Database Operations (db.ts)", () => {
         name: "Waypoint 3",
         latitude: 15,
         longitude: 25,
+        altitude: 0, // Altitude can be 0
         createdAt: 1678886600000,
         notes: "Note 3",
         imageDataUrl: "img3.png",
@@ -541,6 +614,7 @@ describe("Waypoint Database Operations (db.ts)", () => {
         name: "Waypoint 4",
         latitude: 18,
         longitude: 28,
+        // Altitude undefined
         createdAt: 1678886700000,
         notes: "Note 4" /* imageDataUrl undefined */,
       },
@@ -562,21 +636,24 @@ describe("Waypoint Database Operations (db.ts)", () => {
       const feature = result.features[0];
       expect(feature.type).toBe("Feature");
       expect(feature.geometry.type).toBe("Point");
+      // Check for altitude in coordinates
       expect(feature.geometry.coordinates).toEqual([
         singleWaypoint.longitude,
         singleWaypoint.latitude,
+        singleWaypoint.altitude,
       ]);
       expect(feature.properties).toEqual({
         id: singleWaypoint.id,
         name: singleWaypoint.name,
         createdAt: singleWaypoint.createdAt,
         notes: singleWaypoint.notes,
-        imageDataUrl: singleWaypoint.imageDataUrl, // Check for imageDataUrl
+        imageDataUrl: singleWaypoint.imageDataUrl,
+        altitude: singleWaypoint.altitude, // Check for altitude in properties
       });
     });
 
-    it("should convert a single waypoint correctly (without notes or imageDataUrl)", () => {
-      const singleWaypointNoExtras: Waypoint = { ...mockWaypoints[1] }; // This one has no notes or image
+    it("should convert a single waypoint correctly (without notes, imageDataUrl, or altitude)", () => {
+      const singleWaypointNoExtras: Waypoint = { ...mockWaypoints[1] };
       const result = waypointsToGeoJSON([singleWaypointNoExtras]);
 
       expect(result.type).toBe("FeatureCollection");
@@ -585,6 +662,7 @@ describe("Waypoint Database Operations (db.ts)", () => {
       const feature = result.features[0];
       expect(feature.type).toBe("Feature");
       expect(feature.geometry.type).toBe("Point");
+      // Coordinates should not have altitude
       expect(feature.geometry.coordinates).toEqual([
         singleWaypointNoExtras.longitude,
         singleWaypointNoExtras.latitude,
@@ -596,9 +674,10 @@ describe("Waypoint Database Operations (db.ts)", () => {
       });
       expect(feature.properties).not.toHaveProperty("notes");
       expect(feature.properties).not.toHaveProperty("imageDataUrl");
+      expect(feature.properties).not.toHaveProperty("altitude");
     });
 
-    it("should convert multiple waypoints correctly, including imageDataUrl where present", () => {
+    it("should convert multiple waypoints correctly, including altitude and imageDataUrl where present", () => {
       const result = waypointsToGeoJSON(mockWaypoints);
 
       expect(result.type).toBe("FeatureCollection");
@@ -608,10 +687,20 @@ describe("Waypoint Database Operations (db.ts)", () => {
         const feature = result.features[index];
         expect(feature.type).toBe("Feature");
         expect(feature.geometry.type).toBe("Point");
-        expect(feature.geometry.coordinates).toEqual([
-          waypoint.longitude,
-          waypoint.latitude,
-        ]);
+        if (waypoint.altitude !== undefined && waypoint.altitude !== null) {
+          expect(feature.geometry.coordinates).toEqual([
+            waypoint.longitude,
+            waypoint.latitude,
+            waypoint.altitude,
+          ]);
+          expect(feature.properties.altitude).toBe(waypoint.altitude);
+        } else {
+          expect(feature.geometry.coordinates).toEqual([
+            waypoint.longitude,
+            waypoint.latitude,
+          ]);
+          expect(feature.properties).not.toHaveProperty("altitude");
+        }
         expect(feature.properties.id).toBe(waypoint.id);
         expect(feature.properties.name).toBe(waypoint.name);
         expect(feature.properties.createdAt).toBe(waypoint.createdAt);
@@ -639,10 +728,15 @@ describe("Waypoint Database Operations (db.ts)", () => {
         createdAt: 1678886700000,
         notes: undefined,
         imageDataUrl: undefined,
+        altitude: undefined,
       };
       const result = waypointsToGeoJSON([waypointWithUndefinedProps]);
       expect(result.features.length).toBe(1);
       const feature = result.features[0];
+      expect(feature.geometry.coordinates).toEqual([
+        waypointWithUndefinedProps.longitude,
+        waypointWithUndefinedProps.latitude,
+      ]);
       expect(feature.properties).toEqual({
         id: waypointWithUndefinedProps.id,
         name: waypointWithUndefinedProps.name,
@@ -650,6 +744,7 @@ describe("Waypoint Database Operations (db.ts)", () => {
       });
       expect(feature.properties).not.toHaveProperty("notes");
       expect(feature.properties).not.toHaveProperty("imageDataUrl");
+      expect(feature.properties).not.toHaveProperty("altitude");
     });
   });
 

@@ -215,6 +215,11 @@ export default function SavedWaypoints() {
                     Lat: {waypoint.latitude.toFixed(4)}, Lon:{" "}
                     {waypoint.longitude.toFixed(4)}
                   </p>
+                  {waypoint.altitude !== undefined && waypoint.altitude !== null && (
+                    <p className="text-gray-500 text-xs font-normal leading-normal">
+                      Altitude: {waypoint.altitude}m
+                    </p>
+                  )}
                   <p className="text-gray-500 text-xs font-normal leading-normal">
                     Created: {dateFormatter(waypoint.createdAt)}
                   </p>
