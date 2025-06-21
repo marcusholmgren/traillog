@@ -33,13 +33,15 @@ import {
 import {
   Cog6ToothIcon,
   HomeIcon,
+    MapIcon,
+    MapPinIcon,
+    PlusCircleIcon,
   QuestionMarkCircleIcon,
   SparklesIcon,
   Square2StackIcon,
   TicketIcon,
 } from '@heroicons/react/20/solid'
-//import { usePathname } from 'next/navigation'
-import {useLocation, useNavigate} from "react-router";
+import {useLocation} from "react-router";
 
 function AccountDropdownMenu({ anchor }: { anchor: 'top start' | 'bottom end' }) {
   return (
@@ -73,10 +75,11 @@ export function ApplicationLayout({
 }) {
   let location = useLocation()
   let pathname = location.pathname || '/'
+  const baseUrl = import.meta.env.BASE_URL || '/'
   const events = [
-        { id: '1', name: 'Next.js Conference', url: '/events/nextjs-conference' },
-        { id: '2', name: 'React Summit', url: '/events/react-summit' },
-        { id: '3', name: 'JavaScript Meetup', url: '/events/javascript-meetup' },
+        { id: '1', name: 'Easy walk', url:  `${baseUrl}routes/easy`  },
+        { id: '2', name: 'Up and down', url: `${baseUrl}routes/updown` },
+        { id: '3', name: 'Scenic route', url: `${baseUrl}routes/scenic` },
     ]
 
   return (
@@ -87,7 +90,7 @@ export function ApplicationLayout({
           <NavbarSection>
             <Dropdown>
               <DropdownButton as={NavbarItem}>
-                <Avatar src="/erica.jpg" square />
+                <Avatar src={`${baseUrl}erica.jpg`} square />
               </DropdownButton>
               <AccountDropdownMenu anchor="bottom end" />
             </Dropdown>
@@ -99,7 +102,7 @@ export function ApplicationLayout({
           <SidebarHeader>
             <Dropdown>
               <DropdownButton as={SidebarItem}>
-                <Avatar src="/catalyst.svg" />
+                <Avatar src={`${baseUrl}catalyst.svg`} />
                 <SidebarLabel>Catalyst</SidebarLabel>
                 <ChevronDownIcon />
               </DropdownButton>
@@ -110,7 +113,7 @@ export function ApplicationLayout({
                 </DropdownItem>
                 <DropdownDivider />
                 <DropdownItem href="#">
-                  <Avatar slot="icon" src="/teams/catalyst.svg" />
+                  <Avatar slot="icon" src={`${baseUrl}catalyst.svg`} />
                   <DropdownLabel>Catalyst</DropdownLabel>
                 </DropdownItem>
                 <DropdownItem href="#">
@@ -133,21 +136,21 @@ export function ApplicationLayout({
                 <SidebarLabel>Home</SidebarLabel>
               </SidebarItem>
               <SidebarItem to="/map" current={pathname.startsWith('/map')}>
-                <Square2StackIcon />
+                <MapIcon />
                 <SidebarLabel>Map</SidebarLabel>
               </SidebarItem>
               <SidebarItem to="/waypoints" current={pathname.startsWith('/waypoints')}>
-                <TicketIcon />
+                <MapPinIcon />
                 <SidebarLabel>Waypoints</SidebarLabel>
               </SidebarItem>
               <SidebarItem to="/waypoints/add" current={pathname.startsWith('/waypoints/add')}>
-                <Cog6ToothIcon />
+                <PlusCircleIcon />
                 <SidebarLabel>Lägg till</SidebarLabel>
               </SidebarItem>
             </SidebarSection>
 
             <SidebarSection className="max-lg:hidden">
-              <SidebarHeading>Upcoming Events</SidebarHeading>
+              <SidebarHeading>Trails</SidebarHeading>
               {events.map((event) => (
                 <SidebarItem key={event.id} href={event.url}>
                   {event.name}
@@ -173,7 +176,7 @@ export function ApplicationLayout({
             <Dropdown>
               <DropdownButton as={SidebarItem}>
                 <span className="flex min-w-0 items-center gap-3">
-                  <Avatar src="/erica.jpg" className="size-10" square alt="" />
+                  <Avatar src={`${baseUrl}erica.jpg`} className="size-10" square alt="" />
                   <span className="min-w-0">
                     <span className="block truncate text-sm/5 font-medium text-zinc-950 dark:text-white">Erica</span>
                     <span className="block truncate text-xs/5 font-normal text-zinc-500 dark:text-zinc-400">
