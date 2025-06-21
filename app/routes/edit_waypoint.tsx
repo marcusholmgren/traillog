@@ -17,6 +17,7 @@ export default function EditWaypoint() {
   const [notes, setNotes] = useState("");
   const [latitude, setLatitude] = useState<number | string>("");
   const [longitude, setLongitude] = useState<number | string>("");
+  const [altitude, setAltitude] = useState<number | string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -48,6 +49,7 @@ export default function EditWaypoint() {
           setNotes(waypoint.notes || "");
           setLatitude(waypoint.latitude);
           setLongitude(waypoint.longitude);
+          setAltitude(waypoint.altitude !== undefined && waypoint.altitude !== null ? waypoint.altitude.toString() : "");
           setCapturedImage(waypoint.imageDataUrl || null); // Load existing image
         } else {
           setError("Waypoint not found.");
@@ -75,6 +77,7 @@ export default function EditWaypoint() {
     const updates: WaypointUpdate = {
       name,
       notes,
+      altitude: altitude === "" ? undefined : parseFloat(altitude as string),
       imageDataUrl: capturedImage, // Add image data to updates
     };
 
@@ -263,6 +266,20 @@ export default function EditWaypoint() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+            />
+          </label>
+        </div>
+        <div className="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
+          <label className="flex flex-col min-w-40 flex-1">
+            <p className="text-[#0d141c] text-base font-medium leading-normal pb-2">
+              Altitude (Optional, meters)
+            </p>
+            <input
+              type="number"
+              className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#0d141c] focus:outline-0 focus:ring-0 border-none bg-[#e7edf4] focus:border-none h-14 placeholder:text-[#49739c] p-4 text-base font-normal leading-normal"
+              value={altitude}
+              onChange={(e) => setAltitude(e.target.value)}
+              placeholder="Enter altitude"
             />
           </label>
         </div>

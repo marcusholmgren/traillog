@@ -5,6 +5,7 @@ import { addWaypoint } from "../services/db";
 export default function AddWaypoint() {
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
+  const [altitude, setAltitude] = useState<number | null>(null);
   const [name, setName] = useState("");
   const [notes, setNotes] = useState(""); // Added for potential notes
   const [error, setError] = useState<string | null>(null);
@@ -24,6 +25,7 @@ export default function AddWaypoint() {
         (position) => {
           setLatitude(position.coords.latitude);
           setLongitude(position.coords.longitude);
+          setAltitude(position.coords.altitude);
           setError(null);
         },
         (err) => {
@@ -59,6 +61,7 @@ export default function AddWaypoint() {
       name,
       latitude,
       longitude,
+      altitude,
       notes, // Add notes
     };
 
@@ -70,6 +73,7 @@ export default function AddWaypoint() {
       await addWaypoint(waypointData);
       setSuccessMessage("Waypoint saved successfully!");
       setName("");
+      setAltitude(null);
       setNotes(""); // Clear notes
       setCapturedImage(null); // Clear captured image
       setImageError(null);
@@ -225,6 +229,20 @@ export default function AddWaypoint() {
           <h2 className="text-[#0d141c] text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center pr-12">
             New Waypoint
           </h2>
+        </div>
+        <div className="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
+          <label className="flex flex-col min-w-40 flex-1">
+            <p className="text-[#0d141c] text-base font-medium leading-normal pb-2">
+              Altitude (Optional, meters)
+            </p>
+            <input
+              type="number"
+              placeholder="Enter altitude"
+              className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#0d141c] focus:outline-0 focus:ring-0 border-none bg-[#e7edf4] focus:border-none h-14 placeholder:text-[#49739c] p-4 text-base font-normal leading-normal"
+              value={altitude === null ? '' : altitude}
+              onChange={(e) => setAltitude(e.target.value === '' ? null : parseFloat(e.target.value))}
+            />
+          </label>
         </div>
         <div className="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
           <label className="flex flex-col min-w-40 flex-1">
