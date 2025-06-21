@@ -83,8 +83,11 @@ export async function updateWaypoint(
   if (updates.name !== undefined) {
     updatedWaypoint.name = updates.name;
   }
-  if (updates.altitude !== undefined) {
+  if (updates.altitude !== undefined && updates.altitude !== null) {
     updatedWaypoint.altitude = updates.altitude;
+  }
+  if (updates.altitude === null) {
+    updatedWaypoint.altitude = undefined;
   }
   if (updates.notes !== undefined) {
     updatedWaypoint.notes = updates.notes;

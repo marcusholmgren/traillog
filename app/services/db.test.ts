@@ -504,9 +504,9 @@ describe("Waypoint Database Operations (db.ts)", () => {
       expect(updated.altitude).toBe(150);
     });
 
-    it("should remove altitude from a waypoint (set to undefined)", async () => {
+    it("should remove altitude from a waypoint (set to null)", async () => {
       await updateWaypoint(initialWaypoint.id, { altitude: 200 });
-      const updates = { altitude: undefined };
+      const updates = { altitude: null };
       const updated = await updateWaypoint(initialWaypoint.id, updates);
       expect(updated.altitude).toBeUndefined();
     });
