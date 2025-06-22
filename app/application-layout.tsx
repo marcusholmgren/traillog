@@ -107,7 +107,7 @@ export function ApplicationLayout({
                 <ChevronDownIcon />
               </DropdownButton>
               <DropdownMenu className="min-w-80 lg:min-w-64" anchor="bottom start">
-                <DropdownItem href="/settings">
+                <DropdownItem to="/settings">
                   <Cog8ToothIcon />
                   <DropdownLabel>Settings</DropdownLabel>
                 </DropdownItem>

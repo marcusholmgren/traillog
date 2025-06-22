@@ -76,7 +76,7 @@ export function DropdownItem({
     '*:data-[slot=avatar]:mr-2.5 *:data-[slot=avatar]:-ml-1 *:data-[slot=avatar]:size-6 sm:*:data-[slot=avatar]:mr-2 sm:*:data-[slot=avatar]:size-5'
   )
 
-  return 'href' in props ? (
+  return 'to' in props ? (
     <Headless.MenuItem as={Link} {...props} className={classes} />
   ) : (
     <Headless.MenuItem as="button" type="button" {...props} className={classes} />

@@ -5,9 +5,9 @@ import {
   type Waypoint,
   waypointsToGeoJSON,
   deleteWaypoint,
-  clearAllWaypoints,
 } from "../services/db";
 import { data } from "react-router";
+import {WaypointsList} from "~/welcome/waypoints/list";
 
 export default function SavedWaypoints() {
   const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
@@ -96,25 +96,6 @@ export default function SavedWaypoints() {
     }
   };
 
-  const handleDeleteAllData = async () => {
-    setSuccessMessage(null); // Clear previous messages
-    setError(null);
-    if (
-      window.confirm(
-        "Are you sure you want to delete ALL waypoint data? This action cannot be undone."
-      )
-    ) {
-      try {
-        await clearAllWaypoints();
-        setWaypoints([]);
-        setSuccessMessage("All waypoint data has been successfully deleted.");
-      } catch (err) {
-        console.error("Error clearing all waypoints:", err);
-        setError("Failed to delete all waypoint data. Please try again.");
-      }
-    }
-  };
-
   const handleExportToGeoJSON = async () => {
     try {
       const waypoints = await getSavedWaypoints();
@@ -182,6 +163,7 @@ export default function SavedWaypoints() {
         {!isLoading && !error && waypoints.length > 0 && (
           <div className="overflow-y-auto">
             {" "}
+            <WaypointsList waypoints={waypoints} />
             {/* Added for scrollability if list is long */}
             {waypoints.map((waypoint) => (
               <div
@@ -279,13 +261,6 @@ export default function SavedWaypoints() {
               </svg>
             </div>
             <span>Export GeoJSON</span>
-          </button>
-          <button
-            onClick={handleDeleteAllData}
-            className="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-14 bg-red-600 hover:bg-red-700 text-slate-50 text-base font-bold leading-normal tracking-[0.015em] min-w-0 px-4 gap-2"
-            data-testid="delete-all-data-button"
-          >
-            <span>Delete All Data</span>
           </button>
           <button
             onClick={handleAddWaypoint}
