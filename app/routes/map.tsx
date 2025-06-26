@@ -147,7 +147,7 @@ function ActualMap({ userPosition }: { userPosition: UserPosition }) {
     <MapContainer
       center={centerPosition}
       zoom={13}
-      style={{ height: "80%", width: "100%" }}
+      style={{ height: "85vh", width: "100%" }}
     >
       <LayersControl position="topright">
         <LayersControl.BaseLayer checked name="OpenStreetMap">
@@ -165,7 +165,7 @@ function ActualMap({ userPosition }: { userPosition: UserPosition }) {
       </LayersControl>
       <Marker position={centerPosition}>
         <Popup>
-          You are here. <br /> Latitude: {userPosition.latitude}, Longitude: {" "}
+          You are here. <br /> Latitude: {userPosition.latitude}, Longitude:{" "}
           {userPosition.longitude}
         </Popup>
       </Marker>

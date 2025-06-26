@@ -45,7 +45,7 @@ export default function SavedWaypoints() {
   };
 
   const handleAddWaypoint = () => {
-    navigate("/add-waypoint");
+    navigate("/waypoints/add");
   };
 
   const handleDeleteWaypoint = async (id: number) => {
@@ -123,7 +123,7 @@ export default function SavedWaypoints() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-slate-50">
+    <div className="flex flex-col h-screen">
       <header className="flex items-center justify-between p-4 border-b border-slate-200">
         <Button onClick={handleNavigateBack} className="p-2">
           <ArrowLeftIcon className="h-6 w-6" />
@@ -159,7 +159,9 @@ export default function SavedWaypoints() {
                     </div>
                   )}
                   <div className="flex-grow">
-                    <h2 className="font-bold">{waypoint.name}</h2>
+                    <h2 className="font-bold text-green-700">
+                      {waypoint.name}
+                    </h2>
                     <p className="text-sm text-slate-500">
                       Lat: {waypoint.latitude.toFixed(4)}, Lon:{" "}
                       {waypoint.longitude.toFixed(4)}
@@ -174,7 +176,7 @@ export default function SavedWaypoints() {
                     </p>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-2">
-                    <NavLink to={`/edit-waypoint/${waypoint.id}`}>
+                    <NavLink to={`/waypoints/edit/${waypoint.id}`}>
                       <Button outline className="p-2">
                         <PencilIcon className="h-5 w-5" />
                       </Button>
