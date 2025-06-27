@@ -15,6 +15,7 @@ import {
   TrashIcon,
   ShareIcon,
   MapPinIcon,
+  MapIcon, // Added MapIcon for the new button
 } from "@heroicons/react/24/outline";
 
 export default function SavedWaypoints() {
@@ -203,7 +204,15 @@ export default function SavedWaypoints() {
         )}
       </main>
 
-      <footer className="p-4 border-t border-slate-200">
+      <footer className="p-4 border-t border-slate-200 space-y-2">
+        <Button
+          onClick={() => navigate("/waypoints/create_route")}
+          className="w-full flex items-center justify-center gap-2"
+          color="green"
+        >
+          <MapIcon className="h-5 w-5" />
+          Create Route from Waypoints
+        </Button>
         <Button
           onClick={handleExportToGeoJSON}
           className="w-full flex items-center justify-center gap-2"
