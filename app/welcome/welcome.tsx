@@ -52,6 +52,7 @@ export function Welcome() {
               <NavLink to="/waypoints/add" viewTransition>
                 Lägg till waypoint
               </NavLink>
+              <NavLink to="/routes/create">Skapa och exportera routes</NavLink>
             </div>
           </div>
         </div>

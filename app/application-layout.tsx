@@ -1,4 +1,4 @@
-import { Avatar } from './components/avatar'
+import { Avatar } from "./components/avatar";
 import {
   Dropdown,
   DropdownButton,
@@ -6,8 +6,13 @@ import {
   DropdownItem,
   DropdownLabel,
   DropdownMenu,
-} from './components/dropdown'
-import { Navbar, NavbarItem, NavbarSection, NavbarSpacer } from './components/navbar'
+} from "./components/dropdown";
+import {
+  Navbar,
+  NavbarItem,
+  NavbarSection,
+  NavbarSpacer,
+} from "./components/navbar";
 import {
   Sidebar,
   SidebarBody,
@@ -18,8 +23,8 @@ import {
   SidebarLabel,
   SidebarSection,
   SidebarSpacer,
-} from './components/sidebar'
-import { SidebarLayout } from './components/sidebar-layout'
+} from "./components/sidebar";
+import { SidebarLayout } from "./components/sidebar-layout";
 import {
   ArrowRightStartOnRectangleIcon,
   ChevronDownIcon,
@@ -29,21 +34,25 @@ import {
   PlusIcon,
   ShieldCheckIcon,
   UserCircleIcon,
-} from '@heroicons/react/16/solid'
+} from "@heroicons/react/16/solid";
 import {
   Cog6ToothIcon,
   HomeIcon,
-    MapIcon,
-    MapPinIcon,
-    PlusCircleIcon,
+  MapIcon,
+  MapPinIcon,
+  PlusCircleIcon,
   QuestionMarkCircleIcon,
   SparklesIcon,
   Square2StackIcon,
   TicketIcon,
-} from '@heroicons/react/20/solid'
-import {useLocation} from "react-router";
+} from "@heroicons/react/20/solid";
+import { useLocation } from "react-router";
 
-function AccountDropdownMenu({ anchor }: { anchor: 'top start' | 'bottom end' }) {
+function AccountDropdownMenu({
+  anchor,
+}: {
+  anchor: "top start" | "bottom end";
+}) {
   return (
     <DropdownMenu className="min-w-64" anchor={anchor}>
       <DropdownItem href="#">
@@ -65,22 +74,18 @@ function AccountDropdownMenu({ anchor }: { anchor: 'top start' | 'bottom end' })
         <DropdownLabel>Sign out</DropdownLabel>
       </DropdownItem>
     </DropdownMenu>
-  )
+  );
 }
 
-export function ApplicationLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  let location = useLocation()
-  let pathname = location.pathname || '/'
-  const baseUrl = import.meta.env.BASE_URL || '/'
+export function ApplicationLayout({ children }: { children: React.ReactNode }) {
+  let location = useLocation();
+  let pathname = location.pathname || "/";
+  const baseUrl = import.meta.env.BASE_URL || "/";
   const events = [
-        { id: '1', name: 'Easy walk', url:  `${baseUrl}routes/easy`  },
-        { id: '2', name: 'Up and down', url: `${baseUrl}routes/updown` },
-        { id: '3', name: 'Scenic route', url: `${baseUrl}routes/scenic` },
-    ]
+    { id: "1", name: "Easy walk", url: `${baseUrl}routes/easy` },
+    { id: "2", name: "Up and down", url: `${baseUrl}routes/updown` },
+    { id: "3", name: "Scenic route", url: `${baseUrl}routes/scenic` },
+  ];
 
   return (
     <SidebarLayout
@@ -106,7 +111,10 @@ export function ApplicationLayout({
                 <SidebarLabel>Catalyst</SidebarLabel>
                 <ChevronDownIcon />
               </DropdownButton>
-              <DropdownMenu className="min-w-80 lg:min-w-64" anchor="bottom start">
+              <DropdownMenu
+                className="min-w-80 lg:min-w-64"
+                anchor="bottom start"
+              >
                 <DropdownItem to="/settings">
                   <Cog8ToothIcon />
                   <DropdownLabel>Settings</DropdownLabel>
@@ -117,7 +125,11 @@ export function ApplicationLayout({
                   <DropdownLabel>Catalyst</DropdownLabel>
                 </DropdownItem>
                 <DropdownItem href="#">
-                  <Avatar slot="icon" initials="BE" className="bg-purple-500 text-white" />
+                  <Avatar
+                    slot="icon"
+                    initials="BE"
+                    className="bg-purple-500 text-white"
+                  />
                   <DropdownLabel>Big Events</DropdownLabel>
                 </DropdownItem>
                 <DropdownDivider />
@@ -131,21 +143,34 @@ export function ApplicationLayout({
 
           <SidebarBody>
             <SidebarSection>
-              <SidebarItem to="/" current={pathname === '/'}>
+              <SidebarItem to="/" current={pathname === "/"}>
                 <HomeIcon />
                 <SidebarLabel>Home</SidebarLabel>
               </SidebarItem>
-              <SidebarItem to="/map" current={pathname.startsWith('/map')}>
+              <SidebarItem to="/map" current={pathname.startsWith("/map")}>
                 <MapIcon />
                 <SidebarLabel>Map</SidebarLabel>
               </SidebarItem>
-              <SidebarItem to="/waypoints" current={pathname.startsWith('/waypoints')}>
+              <SidebarItem
+                to="/waypoints"
+                current={pathname.startsWith("/waypoints")}
+              >
                 <MapPinIcon />
                 <SidebarLabel>Waypoints</SidebarLabel>
               </SidebarItem>
-              <SidebarItem to="/waypoints/add" current={pathname.startsWith('/waypoints/add')}>
+              <SidebarItem
+                to="/waypoints/add"
+                current={pathname.startsWith("/waypoints/add")}
+              >
                 <PlusCircleIcon />
                 <SidebarLabel>Lägg till</SidebarLabel>
+              </SidebarItem>
+              <SidebarItem
+                to="/routes/create"
+                current={pathname.startsWith("/routes/create")}
+              >
+                <TicketIcon />
+                <SidebarLabel>Routes</SidebarLabel>
               </SidebarItem>
             </SidebarSection>
 
@@ -176,9 +201,16 @@ export function ApplicationLayout({
             <Dropdown>
               <DropdownButton as={SidebarItem}>
                 <span className="flex min-w-0 items-center gap-3">
-                  <Avatar src={`${baseUrl}erica.jpg`} className="size-10" square alt="" />
+                  <Avatar
+                    src={`${baseUrl}erica.jpg`}
+                    className="size-10"
+                    square
+                    alt=""
+                  />
                   <span className="min-w-0">
-                    <span className="block truncate text-sm/5 font-medium text-zinc-950 dark:text-white">Erica</span>
+                    <span className="block truncate text-sm/5 font-medium text-zinc-950 dark:text-white">
+                      Erica
+                    </span>
                     <span className="block truncate text-xs/5 font-normal text-zinc-500 dark:text-zinc-400">
                       erica@example.com
                     </span>
@@ -194,5 +226,5 @@ export function ApplicationLayout({
     >
       {children}
     </SidebarLayout>
-  )
+  );
 }
