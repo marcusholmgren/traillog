@@ -15,9 +15,16 @@ import {
   updateWaypoint,
   getWaypointById,
   waypointsToGeoJSON,
-  deleteWaypoint, // Added import
-  clearAllWaypoints, // Added import
-} from "./db"; // Assuming db.ts is in the same directory for simplicity here, adjust if needed
+  deleteWaypoint,
+  clearAllWaypoints,
+  // Route specific imports
+  type Route,
+  addRoute,
+  getSavedRoutes,
+  getRouteById,
+  deleteRoute,
+  openWaypointsDB, // For direct DB manipulation and schema checks
+} from "./db";
 
 // --- Vitest Setup for fake-indexeddb ---
 // The db module uses openDB from 'idb' directly. We need to mock 'idb' to use fake-indexeddb.
@@ -56,7 +63,7 @@ vi.mock("idb", async (importOriginal) => {
   };
 });
 */
-// vi.mock("idb", async (importOriginal) => {
+// vi.mock("idb", async (importOriginal) => { // Commented out, direct use of fake-indexeddb/auto is simpler
 //   const actualIdb = await importOriginal<typeof import("idb")>();
 //   return {
 //     ...actualIdb,
@@ -75,8 +82,8 @@ describe("Waypoint Database Operations (db.ts)", () => {
 
   beforeEach(async () => {
     // Clear any existing database state between tests
-    indexedDB = new IDBFactory(); // This creates a fresh, empty IndexedDB instance
-    await deleteDB(TEST_DB_INTERNAL_NAME);
+    indexedDB = new IDBFactory(); // This creates a fresh, empty IndexedDB instance for each test
+    // await deleteDB(TEST_DB_INTERNAL_NAME); // deleteDB might cause issues with fake-indexeddb lifecycle if not perfectly synced. IDBFactory should be enough.
     // Reset modules to ensure the mocked 'idb' is used for each test.
     // This also clears any cached instances of the database connection within db.ts.
     // vi.resetModules();
@@ -856,4 +863,126 @@ describe("Waypoint Database Operations (db.ts)", () => {
       expect(waypoints.length).toBe(0);
     });
   });
+
+// -------------------- ROUTE DB FUNCTION TESTS --------------------
+describe("Route DB Functions", () => {
+  beforeEach(async () => {
+    // Ensure a fresh DB for each test using fake-indexeddb
+    indexedDB = new IDBFactory();
+    // DB version 2 is where routes store is introduced
+    const db = await openWaypointsDB(); // This will trigger upgrade to v2 if not already
+    // Clear stores manually if needed, though IDBFactory should provide isolation
+    const txWaypoints = db.transaction("waypoints", "readwrite");
+    await txWaypoints.store.clear();
+    await txWaypoints.done;
+    const txRoutes = db.transaction("routes", "readwrite");
+    await txRoutes.store.clear();
+    await txRoutes.done;
+    db.close();
+  });
+
+  it("should add a new route and retrieve it", async () => {
+    const routeName = "Test Route 1";
+    const waypointIds = [1, 2, 3];
+    const routeId = await addRoute(routeName, waypointIds);
+
+    expect(routeId).toBeTypeOf("number");
+
+    const savedRoute = await getRouteById(routeId);
+    expect(savedRoute).toBeDefined();
+    expect(savedRoute?.name).toBe(routeName);
+    expect(savedRoute?.waypointIds).toEqual(waypointIds);
+    expect(savedRoute?.createdAt).toBeTypeOf("number");
+  });
+
+  it("should get all saved routes, sorted by newest first (descending createdAt)", async () => {
+    const route1Name = "Route Alpha";
+    const route2Name = "Route Beta";
+    const route3Name = "Route Gamma";
+
+    // Control createdAt by mocking Date.now temporarily
+    vi.spyOn(Date, 'now')
+      .mockReturnValueOnce(1000) // Gamma (oldest for this controlled test)
+      .mockReturnValueOnce(2000) // Beta
+      .mockReturnValueOnce(3000); // Alpha (newest for this controlled test)
+
+    const route3Id = await addRoute(route3Name, [4,5,6]); // createdAt: 1000
+    const route2Id = await addRoute(route2Name, [2, 3]);  // createdAt: 2000
+    const route1Id = await addRoute(route1Name, [1]);      // createdAt: 3000
+
+    vi.restoreAllMocks(); // Important to restore Date.now
+
+    const routes = await getSavedRoutes();
+    expect(routes.length).toBe(3);
+    // getSavedRoutes sorts by newest first (descending createdAt)
+    expect(routes[0].id).toBe(route1Id); // Newest
+    expect(routes[0].name).toBe(route1Name);
+    expect(routes[1].id).toBe(route2Id);
+    expect(routes[1].name).toBe(route2Name);
+    expect(routes[2].id).toBe(route3Id); // Oldest
+    expect(routes[2].name).toBe(route3Name);
+  });
+
+  it("should return undefined for a non-existent route ID", async () => {
+    const route = await getRouteById(999);
+    expect(route).toBeUndefined();
+  });
+
+  it("should delete a route", async () => {
+    const routeId = await addRoute("To Be Deleted", [10, 20]);
+    let route = await getRouteById(routeId);
+    expect(route).toBeDefined();
+
+    await deleteRoute(routeId);
+    route = await getRouteById(routeId);
+    expect(route).toBeUndefined();
+  });
+
+  it("getSavedRoutes should return an empty array if no routes are saved", async () => {
+    const routes = await getSavedRoutes();
+    expect(routes).toEqual([]);
+  });
+
+  it("addRoute should create a new route if name is an empty string", async () => {
+    const routeId = await addRoute("", [1]);
+    const route = await getRouteById(routeId);
+    expect(route).toBeDefined();
+    expect(route?.name).toBe("");
+  });
+
+  it("addRoute should create a route with empty waypointIds", async () => {
+    const routeId = await addRoute("Empty Waypoints Route", []);
+    const route = await getRouteById(routeId);
+    expect(route).toBeDefined();
+    expect(route?.waypointIds).toEqual([]);
+  });
+
+  it("should correctly upgrade the DB schema to include routes store (v2 check)", async () => {
+    indexedDB = new IDBFactory(); // Fresh factory
+    // Open with version 1 first (or a version before routes store)
+    let db = await openDB(TEST_DB_INTERNAL_NAME, 1, {
+        upgrade(dbV1) {
+            if (!dbV1.objectStoreNames.contains("waypoints")) {
+                dbV1.createObjectStore("waypoints", { keyPath: "id", autoIncrement: true }).createIndex("createdAt", "createdAt");
+            }
+            // Ensure 'routes' does not exist at v1
+            expect(dbV1.objectStoreNames.contains("routes")).toBe(false);
+        }
+    });
+    db.close();
+
+    // Now, let openWaypointsDB (which uses DB_VERSION = 2 from db.ts) handle the upgrade
+    db = await openWaypointsDB();
+    expect(db.version).toBe(2); // DB_VERSION from db.ts should be 2
+    expect(db.objectStoreNames.contains("waypoints")).toBe(true);
+    expect(db.objectStoreNames.contains("routes")).toBe(true);
+
+    const routeStore = db.transaction("routes", "readonly").store;
+    expect(routeStore.keyPath).toBe("id");
+    expect(routeStore.autoIncrement).toBe(true);
+    expect(routeStore.indexNames.contains("createdAt")).toBe(true);
+
+    db.close();
+  });
+});
 });

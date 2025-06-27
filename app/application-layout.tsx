@@ -172,6 +172,13 @@ export function ApplicationLayout({ children }: { children: React.ReactNode }) {
                 <TicketIcon />
                 <SidebarLabel>Routes</SidebarLabel>
               </SidebarItem>
+              <SidebarItem
+                to="/saved_routes"
+                current={pathname.startsWith("/saved_routes")}
+              >
+                <Square2StackIcon />
+                <SidebarLabel>Saved Routes</SidebarLabel>
+              </SidebarItem>
             </SidebarSection>
 
             <SidebarSection className="max-lg:hidden">
