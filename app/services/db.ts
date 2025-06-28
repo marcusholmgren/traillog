@@ -1,8 +1,10 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 
+// --- Type Definitions ---
+
 export interface Waypoint {
   id: number;
-  name: string;
+  name?: string;
   latitude: number;
   longitude: number;
   altitude?: number;
@@ -13,7 +15,7 @@ export interface Waypoint {
 
 export interface WaypointUpdate {
   name?: string;
-  altitude?: number;
+  altitude?: number | null;
   notes?: string;
   imageDataUrl?: string | null;
 }
@@ -25,7 +27,7 @@ export interface Route {
   createdAt: number;
 }
 
-interface WaypointsDBSchema extends DBSchema {
+interface TrailLogDBSchema extends DBSchema {
   waypoints: {
     key: number;
     value: Waypoint;
@@ -38,7 +40,115 @@ interface WaypointsDBSchema extends DBSchema {
   };
 }
 
-// Route-specific database functions
+// --- Database Setup ---
+
+const DB_NAME = "traillog-db";
+const DB_VERSION = 2;
+const STORE_NAME_WAYPOINTS = "waypoints";
+const STORE_NAME_ROUTES = "routes";
+
+// Exported for testability
+export async function openWaypointsDB(): Promise<
+  IDBPDatabase<TrailLogDBSchema>
+> {
+  return openDB<TrailLogDBSchema>(DB_NAME, DB_VERSION, {
+    upgrade(db, oldVersion) {
+      if (oldVersion < 1) {
+        if (!db.objectStoreNames.contains(STORE_NAME_WAYPOINTS)) {
+          const waypointStore = db.createObjectStore(STORE_NAME_WAYPOINTS, {
+            keyPath: "id",
+            autoIncrement: true,
+          });
+          waypointStore.createIndex("createdAt", "createdAt");
+        }
+      }
+      if (oldVersion < 2) {
+        if (!db.objectStoreNames.contains(STORE_NAME_ROUTES)) {
+          const routeStore = db.createObjectStore(STORE_NAME_ROUTES, {
+            keyPath: "id",
+            autoIncrement: true,
+          });
+          routeStore.createIndex("createdAt", "createdAt");
+        }
+      }
+    },
+  });
+}
+
+// --- Waypoint Functions ---
+
+export async function addWaypoint(
+  waypointData: Omit<Waypoint, "id" | "createdAt">
+): Promise<number> {
+  const db = await openWaypointsDB();
+  const waypoint: Omit<Waypoint, "id"> = {
+    ...waypointData,
+    createdAt: Date.now(),
+  };
+  const id = await db.add(STORE_NAME_WAYPOINTS, waypoint as Waypoint);
+  return Number(id);
+}
+
+export async function getSavedWaypoints(): Promise<Waypoint[]> {
+  const db = await openWaypointsDB();
+  // Return newest first by reversing the default ascending order from the index
+  return db
+    .getAllFromIndex(STORE_NAME_WAYPOINTS, "createdAt")
+    .then((w) => w.reverse());
+}
+
+export async function getWaypointById(
+  id: number
+): Promise<Waypoint | undefined> {
+  const db = await openWaypointsDB();
+  return db.get(STORE_NAME_WAYPOINTS, id);
+}
+
+export async function updateWaypoint(
+  id: number,
+  updates: WaypointUpdate
+): Promise<Waypoint> {
+  const db = await openWaypointsDB();
+  const tx = db.transaction(STORE_NAME_WAYPOINTS, "readwrite");
+  const waypoint = await tx.store.get(id);
+
+  if (!waypoint) {
+    throw new Error(`Waypoint with id ${id} not found`);
+  }
+
+  const updatedWaypoint: Waypoint = { ...waypoint };
+
+  if (updates.name !== undefined) {
+    updatedWaypoint.name = updates.name;
+  }
+  if (updates.notes !== undefined) {
+    updatedWaypoint.notes = updates.notes;
+  }
+  if (updates.altitude !== undefined) {
+    updatedWaypoint.altitude =
+      updates.altitude === null ? undefined : updates.altitude;
+  }
+  if (updates.imageDataUrl !== undefined) {
+    updatedWaypoint.imageDataUrl =
+      updates.imageDataUrl === null ? undefined : updates.imageDataUrl;
+  }
+
+  await tx.store.put(updatedWaypoint);
+  await tx.done;
+  return updatedWaypoint;
+}
+
+export async function deleteWaypoint(id: number): Promise<void> {
+  const db = await openWaypointsDB();
+  await db.delete(STORE_NAME_WAYPOINTS, id);
+}
+
+export async function clearAllWaypoints(): Promise<void> {
+  const db = await openWaypointsDB();
+  await db.clear(STORE_NAME_WAYPOINTS);
+}
+
+// --- Route Functions ---
 
 export async function addRoute(
   routeName: string,
@@ -57,7 +167,9 @@ export async function addRoute(
 export async function getSavedRoutes(): Promise<Route[]> {
   const db = await openWaypointsDB();
   // Sort by 'createdAt' in descending order to get newest routes first
-  return db.getAllFromIndex(STORE_NAME_ROUTES, "createdAt").then(routes => routes.reverse());
+  return db
+    .getAllFromIndex(STORE_NAME_ROUTES, "createdAt")
+    .then((routes) => routes.reverse());
 }
 
 export async function getRouteById(id: number): Promise<Route | undefined> {
@@ -70,122 +182,17 @@ export async function deleteRoute(id: number): Promise<void> {
   await db.delete(STORE_NAME_ROUTES, id);
 }
 
-const DB_NAME = "waypoints-db";
-const DB_VERSION = 2; // Incremented DB_VERSION due to schema change
-const STORE_NAME_WAYPOINTS = "waypoints";
-const STORE_NAME_ROUTES = "routes";
-
-async function openWaypointsDB(): Promise<IDBPDatabase<WaypointsDBSchema>> {
-  return openDB<WaypointsDBSchema>(DB_NAME, DB_VERSION, {
-    upgrade(db, oldVersion) {
-      if (oldVersion < 1) { // For initial setup or versions before 1
-        if (!db.objectStoreNames.contains(STORE_NAME_WAYPOINTS)) {
-          const waypointStore = db.createObjectStore(STORE_NAME_WAYPOINTS, {
-            keyPath: "id",
-            autoIncrement: true,
-          });
-          waypointStore.createIndex("createdAt", "createdAt");
-        }
-      }
-      if (oldVersion < 2) { // For versions before 2 (i.e., when routes store was added)
-        if (!db.objectStoreNames.contains(STORE_NAME_ROUTES)) {
-          const routeStore = db.createObjectStore(STORE_NAME_ROUTES, {
-            keyPath: "id",
-            autoIncrement: true,
-          });
-          routeStore.createIndex("createdAt", "createdAt");
-        }
-      }
-    },
-  });
-}
-
-export async function addWaypoint(
-  waypointData: Omit<Waypoint, "id" | "createdAt">
-): Promise<number> {
-  const db = await openWaypointsDB();
-  const waypoint: Omit<Waypoint, "id"> = {
-    name: waypointData.name,
-    latitude: waypointData.latitude,
-    longitude: waypointData.longitude,
-    altitude: waypointData.altitude,
-    notes: waypointData.notes,
-    imageDataUrl: waypointData.imageDataUrl, // Add imageDataUrl
-    createdAt: Date.now(),
-  };
-  // The `add` method returns the key of the added record.
-  const id = await db.add(STORE_NAME_WAYPOINTS, waypoint as Waypoint); // Cast to Waypoint because autoincrement handles 'id'
-  return Number(id); // Ensure it's a number, as IDBKey can be other types.
-}
-
-export async function getSavedWaypoints(): Promise<Waypoint[]> {
-  const db = await openWaypointsDB();
-  return db.getAllFromIndex(STORE_NAME_WAYPOINTS, "createdAt");
-}
-
-export async function updateWaypoint(
-  id: number,
-  updates: WaypointUpdate
-): Promise<Waypoint> {
-  const db = await openWaypointsDB();
-  const waypoint = await db.get(STORE_NAME_WAYPOINTS, id);
-
-  if (!waypoint) {
-    throw new Error(`Waypoint with id ${id} not found`);
-  }
-
-  // Update only the provided fields
-  const updatedWaypoint = { ...waypoint };
-  if (updates.name !== undefined) {
-    updatedWaypoint.name = updates.name;
-  }
-  if (updates.altitude !== undefined && updates.altitude !== null) {
-    updatedWaypoint.altitude = updates.altitude;
-  }
-  if (updates.altitude === null) {
-    updatedWaypoint.altitude = undefined;
-  }
-  if (updates.notes !== undefined) {
-    updatedWaypoint.notes = updates.notes;
-  }
-  if (updates.imageDataUrl === null) {
-    // Add this block
-    updatedWaypoint.imageDataUrl = undefined;
-  }
-  if (updates.imageDataUrl !== undefined && updates.imageDataUrl !== null) {
-    // Add this block
-    updatedWaypoint.imageDataUrl = updates.imageDataUrl;
-  }
-
-  await db.put(STORE_NAME_WAYPOINTS, updatedWaypoint);
-  return updatedWaypoint;
-}
-
-export async function getWaypointById(
-  id: number
-): Promise<Waypoint | undefined> {
-  const db = await openWaypointsDB();
-  return db.get(STORE_NAME_WAYPOINTS, id);
-}
-
-export async function deleteWaypoint(id: number): Promise<void> {
-  const db = await openWaypointsDB();
-  await db.delete(STORE_NAME_WAYPOINTS, id);
-}
-
-export async function clearAllWaypoints(): Promise<void> {
-  const db = await openWaypointsDB();
-  await db.clear(STORE_NAME_WAYPOINTS);
-}
+// --- GeoJSON Conversion ---
 
 export function waypointsToGeoJSON(
   waypoints: Waypoint[]
 ): GeoJSON.FeatureCollection<GeoJSON.Point> {
   const features: GeoJSON.Feature<GeoJSON.Point>[] = waypoints.map(
     (waypoint) => {
-      const coordinates: GeoJSON.Position = waypoint.altitude !== undefined
-        ? [waypoint.longitude, waypoint.latitude, waypoint.altitude]
-        : [waypoint.longitude, waypoint.latitude];
+      const coordinates: GeoJSON.Position =
+        waypoint.altitude !== undefined && waypoint.altitude !== null
+          ? [waypoint.longitude, waypoint.latitude, waypoint.altitude]
+          : [waypoint.longitude, waypoint.latitude];
 
       const feature: GeoJSON.Feature<GeoJSON.Point> = {
         type: "Feature",
@@ -199,16 +206,17 @@ export function waypointsToGeoJSON(
           createdAt: waypoint.createdAt,
         },
       };
-      if (waypoint.altitude !== undefined) {
-        feature.properties.altitude = waypoint.altitude;
-      }
-      if (waypoint.notes !== undefined) {
+
+      if (waypoint.notes) {
         feature.properties.notes = waypoint.notes;
       }
-      if (waypoint.imageDataUrl !== undefined) {
-        // Add this block
+      if (waypoint.imageDataUrl) {
         feature.properties.imageDataUrl = waypoint.imageDataUrl;
       }
+      if (waypoint.altitude !== undefined && waypoint.altitude !== null) {
+        feature.properties.altitude = waypoint.altitude;
+      }
+
       return feature;
     }
   );
