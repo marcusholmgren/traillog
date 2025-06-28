@@ -15,7 +15,9 @@ export default [
     route("/add", "routes/add_waypoint.tsx"),
     route("/edit/:wpId", "routes/edit_waypoint.tsx"),
   ]),
-  route("/routes/create", "routes/create_route.tsx"),
-  route("/saved_routes", "routes/saved_routes.tsx"), // Added saved_routes
+  ...prefix("routes", [
+    route("/", "routes/saved_routes.tsx"), // Added saved_routes
+    route("/create", "routes/create_route.tsx"),
+  ]),
   route("/settings", "routes/settings.tsx"),
 ] satisfies RouteConfig;

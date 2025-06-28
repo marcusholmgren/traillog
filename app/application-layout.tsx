@@ -170,14 +170,14 @@ export function ApplicationLayout({ children }: { children: React.ReactNode }) {
                 current={pathname.startsWith("/routes/create")}
               >
                 <TicketIcon />
-                <SidebarLabel>Routes</SidebarLabel>
+                <SidebarLabel>Create route</SidebarLabel>
               </SidebarItem>
               <SidebarItem
-                to="/saved_routes"
-                current={pathname.startsWith("/saved_routes")}
+                to="/routes"
+                current={pathname.startsWith("/routes")}
               >
                 <Square2StackIcon />
-                <SidebarLabel>Saved Routes</SidebarLabel>
+                <SidebarLabel>Routes</SidebarLabel>
               </SidebarItem>
             </SidebarSection>
 

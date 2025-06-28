@@ -206,7 +206,7 @@ export default function SavedWaypoints() {
 
       <footer className="p-4 border-t border-slate-200 space-y-2">
         <Button
-          onClick={() => navigate("/waypoints/create_route")}
+          onClick={() => navigate("/routes/create")}
           className="w-full flex items-center justify-center gap-2"
           color="green"
         >
