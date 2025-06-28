@@ -528,4 +528,124 @@ describe("Waypoint Database Operations (db.ts)", () => {
       dbV2.close();
     });
   });
+
+  describe("Import/Export Functions", () => {
+    const sampleWaypoints: Waypoint[] = [
+      { id: 1, latitude: 10, longitude: 20, name: "W1", createdAt: 1000 },
+      { id: 2, latitude: 11, longitude: 21, name: "W2", createdAt: 2000, altitude: 100, notes: "Note for W2" },
+    ];
+
+    const sampleRoutes: db.Route[] = [
+      { id: 1, name: "R1", waypointIds: [1], createdAt: 3000 },
+      { id: 2, name: "R2", waypointIds: [1, 2], createdAt: 4000 },
+    ];
+
+    beforeEach(async () => {
+      // Clear and populate DB for each test
+      await db.clearAllWaypoints(); // Assumes this also clears routes if they were in the same DB/transaction in a real scenario, or a separate clearRoutes would be needed
+      const routeStore = (await db.openWaypointsDB()).transaction("routes", "readwrite").store;
+      await routeStore.clear();
+
+
+      for (const wp of sampleWaypoints) {
+        await db.addWaypoint({latitude: wp.latitude, longitude: wp.longitude, name: wp.name, altitude: wp.altitude, notes: wp.notes});
+      }
+       // Adjust createdAt after adding, as addWaypoint assigns Date.now()
+      const wps = await db.getSavedWaypoints();
+      await (await db.openWaypointsDB()).transaction("waypoints", "readwrite").store.put({...wps[1], createdAt: 1000});
+      await (await db.openWaypointsDB()).transaction("waypoints", "readwrite").store.put({...wps[0], createdAt: 2000});
+
+
+      for (const route of sampleRoutes) {
+        await db.addRoute(route.name, route.waypointIds);
+      }
+      // Adjust createdAt
+      const routes = await db.getSavedRoutes();
+      await (await db.openWaypointsDB()).transaction("routes", "readwrite").store.put({...routes[1], createdAt: 3000});
+      await (await db.openWaypointsDB()).transaction("routes", "readwrite").store.put({...routes[0], createdAt: 4000});
+    });
+
+    describe("exportWaypoints", () => {
+      it("should export waypoints to GeoJSON string", async () => {
+        const geoJsonString = await db.exportWaypoints();
+        const geoJson = JSON.parse(geoJsonString);
+        expect(geoJson.type).toBe("FeatureCollection");
+        expect(geoJson.features.length).toBe(2);
+        // Verify some properties of the first feature (W2 because it's newer)
+        expect(geoJson.features[0].properties.name).toBe("W2");
+        expect(geoJson.features[0].geometry.coordinates).toEqual([21, 11, 100]);
+         // Verify some properties of the second feature (W1)
+        expect(geoJson.features[1].properties.name).toBe("W1");
+        expect(geoJson.features[1].geometry.coordinates).toEqual([20, 10]);
+      });
+    });
+
+    describe("importWaypoints", () => {
+      it("should import waypoints from GeoJSON string", async () => {
+        await db.clearAllWaypoints(); // Start with an empty DB
+        const geoJsonToImport = db.waypointsToGeoJSON(sampleWaypoints); // Use existing waypoints for test data
+        await db.importWaypoints(JSON.stringify(geoJsonToImport));
+
+        const importedWaypoints = await db.getSavedWaypoints();
+        expect(importedWaypoints.length).toBe(2);
+        // Order might change due to new createdAt, so check by name
+        const w1 = importedWaypoints.find(w => w.name === "W1");
+        const w2 = importedWaypoints.find(w => w.name === "W2");
+
+        expect(w1).toBeDefined();
+        expect(w2).toBeDefined();
+        expect(w1?.latitude).toBe(10);
+        expect(w2?.altitude).toBe(100);
+      });
+
+      it("should skip waypoints with invalid coordinates", async () => {
+        await db.clearAllWaypoints();
+        const invalidGeoJson = {
+          type: "FeatureCollection",
+          features: [
+            { type: "Feature", geometry: { type: "Point", coordinates: [1] }, properties: { name: "Invalid" } },
+            { type: "Feature", geometry: { type: "Point", coordinates: [10,20] }, properties: { name: "Valid" } }
+          ]
+        };
+        await db.importWaypoints(JSON.stringify(invalidGeoJson));
+        const waypoints = await db.getSavedWaypoints();
+        expect(waypoints.length).toBe(1);
+        expect(waypoints[0].name).toBe("Valid");
+      });
+    });
+
+    describe("exportRoutes", () => {
+      it("should export routes to JSON string", async () => {
+        const jsonString = await db.exportRoutes();
+        const exportedRoutes = JSON.parse(jsonString);
+        expect(exportedRoutes.length).toBe(2);
+        // R2 is newer
+        expect(exportedRoutes[0].name).toBe("R2");
+        expect(exportedRoutes[0].waypointIds).toEqual([1, 2]);
+        expect(exportedRoutes[1].name).toBe("R1");
+      });
+    });
+
+    describe("importRoutes", () => {
+      it("should import routes from JSON string, preserving createdAt", async () => {
+        const routeStore = (await db.openWaypointsDB()).transaction("routes", "readwrite").store;
+        await routeStore.clear(); // Start with empty routes
+
+        await db.importRoutes(JSON.stringify(sampleRoutes));
+        const importedRoutes = await db.getSavedRoutes();
+
+        expect(importedRoutes.length).toBe(2);
+        // Check order by createdAt (desc) and preserved values
+        const r2 = importedRoutes.find(r => r.name === "R2");
+        const r1 = importedRoutes.find(r => r.name === "R1");
+
+        expect(r2).toBeDefined();
+        expect(r1).toBeDefined();
+
+        expect(r2?.createdAt).toBe(4000);
+        expect(r1?.createdAt).toBe(3000);
+        expect(r2?.waypointIds).toEqual([1,2]);
+      });
+    });
+  });
 });

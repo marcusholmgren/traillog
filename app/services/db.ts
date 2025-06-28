@@ -148,6 +148,41 @@ export async function clearAllWaypoints(): Promise<void> {
   await db.clear(STORE_NAME_WAYPOINTS);
 }
 
+export async function exportWaypoints(): Promise<string> {
+  const waypoints = await getSavedWaypoints();
+  const geoJson = waypointsToGeoJSON(waypoints);
+  return JSON.stringify(geoJson, null, 2);
+}
+
+export async function importWaypoints(geoJsonString: string): Promise<void> {
+  const geoJson: GeoJSON.FeatureCollection<GeoJSON.Point> =
+    JSON.parse(geoJsonString);
+  const db = await openWaypointsDB();
+  const tx = db.transaction(STORE_NAME_WAYPOINTS, "readwrite");
+
+  for (const feature of geoJson.features) {
+    const properties = feature.properties;
+    const coordinates = feature.geometry.coordinates;
+
+    // Check if coordinates exist and have at least two values (longitude, latitude)
+    if (!coordinates || coordinates.length < 2) {
+      console.warn("Skipping waypoint with invalid coordinates:", feature);
+      continue;
+    }
+
+    const waypointData: Omit<Waypoint, "id" | "createdAt"> = {
+      name: properties?.name,
+      latitude: coordinates[1],
+      longitude: coordinates[0],
+      altitude: coordinates.length > 2 ? coordinates[2] : undefined,
+      notes: properties?.notes,
+      imageDataUrl: properties?.imageDataUrl,
+    };
+    await addWaypoint(waypointData); // Use existing addWaypoint function
+  }
+  await tx.done;
+}
+
 // --- Route Functions ---
 
 export async function addRoute(
@@ -180,6 +215,28 @@ export async function getRouteById(id: number): Promise<Route | undefined> {
 export async function deleteRoute(id: number): Promise<void> {
   const db = await openWaypointsDB();
   await db.delete(STORE_NAME_ROUTES, id);
+}
+
+export async function exportRoutes(): Promise<string> {
+  const routes = await getSavedRoutes();
+  return JSON.stringify(routes, null, 2);
+}
+
+export async function importRoutes(jsonString: string): Promise<void> {
+  const routes: Route[] = JSON.parse(jsonString);
+  const db = await openWaypointsDB();
+  const tx = db.transaction(STORE_NAME_ROUTES, "readwrite");
+  for (const route of routes) {
+    // We can't use addRoute directly as it creates a new createdAt timestamp
+    // and we want to preserve the original one.
+    await tx.store.add({
+      // id: route.id, // Let idb auto-increment the id to avoid conflicts
+      name: route.name,
+      waypointIds: route.waypointIds,
+      createdAt: route.createdAt,
+    });
+  }
+  await tx.done;
 }
 
 // --- GeoJSON Conversion ---
