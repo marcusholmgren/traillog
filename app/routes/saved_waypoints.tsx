@@ -1,82 +1,59 @@
-import { useEffect, useState } from "react";
-import { useNavigate, NavLink } from "react-router";
-import {
-  getSavedWaypoints,
-  type Waypoint,
-  waypointsToGeoJSON,
-  deleteWaypoint,
-} from "../services/db";
+import { useNavigate, NavLink } from "react-router-dom";
+import { type Waypoint, waypointsToGeoJSON, getSavedWaypoints as dbGetSavedWaypoints } from "~/services/db";
 import { Button } from "~/components/button";
 import {
-  ArrowLeftIcon,
-  PlusIcon,
   ArrowDownOnSquareIcon,
   PencilIcon,
   TrashIcon,
   ShareIcon,
   MapPinIcon,
-  MapIcon, // Added MapIcon for the new button
+  MapIcon,
 } from "@heroicons/react/24/outline";
+import { useWaypoints } from "~/hooks/useWaypoints";
+import { EntityPageLayout } from "~/components/entity-page-layout";
+import { ResourceList } from "~/components/resource-list";
 
 export default function SavedWaypoints() {
-  const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const {
+    waypoints,
+    isLoading,
+    error: waypointsError, // Renamed to avoid conflict if EntityPageLayout introduces its own error prop
+    deleteWaypoint,
+  } = useWaypoints();
 
-  useEffect(() => {
-    async function fetchWaypoints() {
-      try {
-        setIsLoading(true);
-        const savedWaypoints = await getSavedWaypoints();
-        setWaypoints(savedWaypoints);
-        setError(null);
-      } catch (err) {
-        console.error("Error fetching saved waypoints:", err);
-        setError("Failed to load saved waypoints. Please try again.");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchWaypoints();
-  }, []);
-
-  const handleNavigateBack = () => {
-    navigate(-1);
-  };
+  // Error from hook needs to be available for ResourceList and potentially other UI elements
+  const error = waypointsError;
 
   const handleAddWaypoint = () => {
     navigate("/waypoints/add");
   };
 
   const handleDeleteWaypoint = async (id: number) => {
-    if (window.confirm("Are you sure you want to delete this waypoint?")) {
-      try {
-        await deleteWaypoint(id);
-        setWaypoints((prevWaypoints) =>
-          prevWaypoints.filter((wp) => wp.id !== id)
-        );
-        console.log(`Waypoint ${id} deleted successfully.`);
-      } catch (err) {
-        console.error("Error deleting waypoint:", err);
-        setError("Failed to delete waypoint. Please try again.");
-      }
+    try {
+      await deleteWaypoint(id);
+      // UI is updated via hook state
+      console.log(`Waypoint ${id} deleted successfully.`);
+    } catch (err) {
+      console.error("Error deleting waypoint from UI:", err);
+      // Error is already set in the hook, but you could show a specific notification here if needed
+      alert("Failed to delete waypoint. Please try again.");
     }
   };
 
   const handleShareWaypoint = async (waypoint: Waypoint) => {
     const shareText = `Waypoint: ${
-      waypoint.name
+      waypoint.name || "Unnamed"
     } - Lat: ${waypoint.latitude.toFixed(4)}, Lon: ${waypoint.longitude.toFixed(
       4
     )}`;
-    const shareTitle = `Share Waypoint: ${waypoint.name}`;
+    const shareTitle = `Share Waypoint: ${waypoint.name || "Unnamed"}`;
 
     if (navigator.share) {
       try {
         const geojsonData = waypointsToGeoJSON([waypoint]);
         const geojsonString = JSON.stringify(geojsonData);
-        const fileName = `${waypoint.name}.geojson`;
+        const fileName = `${waypoint.name || "waypoint"}.geojson`;
         const file = new File([geojsonString], fileName, {
           type: "application/geo+json",
         });
@@ -87,9 +64,9 @@ export default function SavedWaypoints() {
           files: [file],
         });
         console.log("Waypoint shared successfully");
-      } catch (error) {
-        console.error("Error sharing waypoint:", error);
-        alert("Error sharing: " + (error as Error).message);
+      } catch (shareError) {
+        console.error("Error sharing waypoint:", shareError);
+        alert("Error sharing: " + (shareError as Error).message);
       }
     } else {
       console.warn("Web Share API not supported in this browser.");
@@ -101,12 +78,14 @@ export default function SavedWaypoints() {
 
   const handleExportToGeoJSON = async () => {
     try {
-      const waypoints = await getSavedWaypoints();
-      if (waypoints.length === 0) {
+      // It's better to use the waypoints from the hook's state if they are always up-to-date
+      // or fetch fresh ones if necessary, though the hook should keep them fresh.
+      const currentWaypoints = await dbGetSavedWaypoints(); // Or use 'waypoints' from hook if always current
+      if (currentWaypoints.length === 0) {
         alert("No waypoints to export.");
         return;
       }
-      const geojsonData = waypointsToGeoJSON(waypoints);
+      const geojsonData = waypointsToGeoJSON(currentWaypoints);
       const jsonString = JSON.stringify(geojsonData, null, 2);
       const blob = new Blob([jsonString], { type: "application/json" });
       const href = URL.createObjectURL(blob);
@@ -123,114 +102,108 @@ export default function SavedWaypoints() {
     }
   };
 
-  return (
-    <div className="flex flex-col h-screen">
-      <header className="flex items-center justify-between p-4 border-b border-slate-200">
-        <Button onClick={handleNavigateBack} className="p-2">
-          <ArrowLeftIcon className="h-6 w-6" />
-        </Button>
-        <h1 className="text-lg font-bold">Saved Waypoints</h1>
-        <Button onClick={handleAddWaypoint} className="p-2">
-          <PlusIcon className="h-6 w-6" />
-        </Button>
-      </header>
-
-      <main className="flex-grow overflow-y-auto">
-        {isLoading && <p className="p-4 text-center">Loading...</p>}
-        {error && <p className="p-4 text-center text-red-500">{error}</p>}
-        {!isLoading && !error && waypoints.length === 0 && (
-          <p className="p-4 text-center text-slate-500">
-            No waypoints saved yet.
+  const renderWaypointItem = (waypoint: Waypoint) => (
+    <div className="flex items-start gap-4 p-4">
+      {waypoint.imageDataUrl ? (
+        <img
+          src={waypoint.imageDataUrl}
+          alt={waypoint.name || "Waypoint image"}
+          className="h-16 w-16 rounded-lg object-cover"
+        />
+      ) : (
+        <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-slate-200">
+          <MapPinIcon className="h-8 w-8 text-slate-500" />
+        </div>
+      )}
+      <div className="flex-grow">
+        <h2 className="font-bold text-green-700">
+          {waypoint.name || "Unnamed Waypoint"}
+        </h2>
+        <p className="text-sm text-slate-500">
+          Lat: {waypoint.latitude.toFixed(4)}, Lon:{" "}
+          {waypoint.longitude.toFixed(4)}
+        </p>
+        {waypoint.altitude && (
+          <p className="text-sm text-slate-500">
+            Altitude: {waypoint.altitude}m
           </p>
         )}
-        {!isLoading && !error && waypoints.length > 0 && (
-          <ul className="divide-y divide-slate-200">
-            {waypoints.map((waypoint) => (
-              <li key={waypoint.id} className="p-4">
-                <div className="flex items-start gap-4">
-                  {waypoint.imageDataUrl ? (
-                    <img
-                      src={waypoint.imageDataUrl}
-                      alt={waypoint.name}
-                      className="h-16 w-16 rounded-lg object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-slate-200">
-                      <MapPinIcon className="h-8 w-8 text-slate-500" />
-                    </div>
-                  )}
-                  <div className="flex-grow">
-                    <h2 className="font-bold text-green-700">
-                      {waypoint.name}
-                    </h2>
-                    <p className="text-sm text-slate-500">
-                      Lat: {waypoint.latitude.toFixed(4)}, Lon:{" "}
-                      {waypoint.longitude.toFixed(4)}
-                    </p>
-                    {waypoint.altitude && (
-                      <p className="text-sm text-slate-500">
-                        Altitude: {waypoint.altitude}m
-                      </p>
-                    )}
-                    <p className="text-xs text-slate-400 pt-1">
-                      {new Date(waypoint.createdAt).toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <NavLink to={`/waypoints/edit/${waypoint.id}`}>
-                      <Button outline className="p-2">
-                        <PencilIcon className="h-5 w-5" />
-                      </Button>
-                    </NavLink>
-                    <Button
-                      outline
-                      onClick={() => handleDeleteWaypoint(waypoint.id)}
-                      className="p-2"
-                    >
-                      <TrashIcon className="h-5 w-5" />
-                    </Button>
-                    <Button
-                      outline
-                      onClick={() => handleShareWaypoint(waypoint)}
-                      className="p-2"
-                    >
-                      <ShareIcon className="h-5 w-5" />
-                    </Button>
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </main>
-
-      <footer className="p-4 border-t border-slate-200 space-y-2">
+        <p className="text-xs text-slate-400 pt-1">
+          {new Date(waypoint.createdAt).toLocaleString()}
+        </p>
+      </div>
+      <div className="flex flex-col sm:flex-row gap-2">
+        <NavLink to={`/waypoints/edit/${waypoint.id}`}>
+          <Button outline className="p-2" aria-label="Edit waypoint">
+            <PencilIcon className="h-5 w-5" />
+          </Button>
+        </NavLink>
         <Button
-          onClick={() => navigate("/routes/create")}
-          className="w-full flex items-center justify-center gap-2"
-          color="green"
+          outline
+          onClick={() => handleDeleteWaypoint(waypoint.id)}
+          className="p-2"
+          aria-label="Delete waypoint"
         >
-          <MapIcon className="h-5 w-5" />
-          Create Route from Waypoints
+          <TrashIcon className="h-5 w-5" />
         </Button>
         <Button
-          onClick={handleExportToGeoJSON}
-          className="w-full flex items-center justify-center gap-2"
+          outline
+          onClick={() => handleShareWaypoint(waypoint)}
+          className="p-2"
+          aria-label="Share waypoint"
         >
-          <ArrowDownOnSquareIcon className="h-5 w-5" />
-          Export all to GeoJSON
+          <ShareIcon className="h-5 w-5" />
         </Button>
-      </footer>
+      </div>
     </div>
+  );
+
+  const pageFooter = (
+    <>
+      <Button
+        onClick={() => navigate("/routes/create")}
+        className="w-full flex items-center justify-center gap-2"
+        color="green"
+      >
+        <MapIcon className="h-5 w-5" />
+        Create Route from Waypoints
+      </Button>
+      <Button
+        onClick={handleExportToGeoJSON}
+        className="w-full flex items-center justify-center gap-2"
+      >
+        <ArrowDownOnSquareIcon className="h-5 w-5" />
+        Export all to GeoJSON
+      </Button>
+    </>
+  );
+
+  return (
+    <EntityPageLayout
+      pageTitle="Saved Waypoints"
+      onAdd={handleAddWaypoint}
+      addLabel="Add New Waypoint"
+      footerContent={pageFooter}
+    >
+      <ResourceList
+        items={waypoints}
+        renderItem={renderWaypointItem}
+        isLoading={isLoading}
+        error={error}
+        emptyStateMessage="No waypoints saved yet."
+        itemKey="id"
+      />
+    </EntityPageLayout>
   );
 }
 
-const dateFormatter = (number: number | Date) => {
-  const userLocales = navigator.languages || [navigator.language];
-  //TODO console.log(userLocales);
-  const seLong = new Intl.DateTimeFormat(userLocales, {
-    dateStyle: "full",
-    timeStyle: "short",
-  });
-  return seLong.format(number);
-};
+// The dateFormatter function seems unused in the original component after refactor,
+// but if it were needed, it should be kept or moved to a utility file.
+// const dateFormatter = (number: number | Date) => {
+//   const userLocales = navigator.languages || [navigator.language];
+//   const seLong = new Intl.DateTimeFormat(userLocales, {
+//     dateStyle: "full",
+//     timeStyle: "short",
+//   });
+//   return seLong.format(number);
+// };

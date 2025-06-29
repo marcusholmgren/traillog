@@ -1,19 +1,12 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  getSavedRoutes,
-  deleteRoute,
   type Route,
   getWaypointById,
   type Waypoint,
-} from "../services/db";
+} from "~/services/db";
 import { Button } from "~/components/button";
-import {
-  ArrowLeftIcon,
-  TrashIcon,
-  EyeIcon,
-  MapIcon,
-} from "@heroicons/react/24/outline";
+import { TrashIcon, EyeIcon, MapIcon } from "@heroicons/react/24/outline";
 import {
   Dialog,
   DialogActions,
@@ -21,35 +14,28 @@ import {
   DialogDescription,
   DialogTitle,
 } from "~/components/dialog";
+import { useRoutes } from "~/hooks/useRoutes";
+import { EntityPageLayout } from "~/components/entity-page-layout";
+import { ResourceList } from "~/components/resource-list";
 
 export default function SavedRoutesPage() {
-  const [routes, setRoutes] = useState<Route[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const {
+    routes,
+    isLoading,
+    error: routesError, // Renamed to avoid conflict
+    deleteRoute,
+  } = useRoutes();
+
   const [routeToDelete, setRouteToDelete] = useState<Route | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const navigate = useNavigate();
 
-  async function fetchRoutes() {
-    try {
-      setIsLoading(true);
-      const savedRoutes = await getSavedRoutes();
-      setRoutes(savedRoutes);
-      setError(null);
-    } catch (err) {
-      console.error("Error fetching saved routes:", err);
-      setError("Failed to load saved routes. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  // Consolidate error display
+  const error = routesError || (isDeleting && "Failed to delete route.");
 
-  useEffect(() => {
-    fetchRoutes();
-  }, []);
 
-  const handleNavigateBack = () => {
-    navigate(-1); // Or navigate to a specific home/dashboard page
+  const handleCreateNewRoute = () => {
+    navigate("/routes/create");
   };
 
   const openDeleteConfirmDialog = (route: Route) => {
@@ -64,24 +50,19 @@ export default function SavedRoutesPage() {
     if (!routeToDelete) return;
     setIsDeleting(true);
     try {
-      await deleteRoute(routeToDelete.id);
-      setRoutes((prevRoutes) =>
-        prevRoutes.filter((r) => r.id !== routeToDelete.id)
-      );
+      await deleteRoute(routeToDelete.id); // Hook handles UI update
       closeDeleteConfirmDialog();
     } catch (err) {
-      console.error("Error deleting route:", err);
-      setError(
-        `Failed to delete route "${routeToDelete.name}". Please try again.`
-      );
+      console.error("Error deleting route from UI:", err);
+      // Error will be set by the hook, or you can set a specific message here
+      // For instance, if the hook's error is generic:
+      // setError(`Failed to delete route "${routeToDelete.name}". Please try again.`);
     } finally {
       setIsDeleting(false);
     }
   };
 
-  // Basic function to construct a view URL.
-  // This will need to be more sophisticated based on how map page handles route display.
-  const handleViewRoute = async (route: Route) => {
+  const handleViewRouteOnMap = async (route: Route) => {
     try {
       const waypoints = await Promise.all(
         route.waypointIds.map((id) => getWaypointById(id))
@@ -89,90 +70,82 @@ export default function SavedRoutesPage() {
       const validWaypoints = waypoints.filter(
         (wp) => wp !== undefined
       ) as Waypoint[];
+
       if (validWaypoints.length < 2) {
-        alert("Route requires at least 2 valid waypoints to display.");
+        alert("Route requires at least 2 valid waypoints to display on the map.");
         return;
       }
       const coordinates = validWaypoints
         .map((wp) => `${wp.longitude},${wp.latitude}`)
         .join(";");
-      // Assuming a map provider like OpenStreetMap or similar
-      // This is a simplified example. Actual implementation might involve passing GeoJSON or structured data.
-      // const mapUrl = `/map?route=${encodeURIComponent(JSON.stringify(route))}`;
-      // For now, let's just log it, as map display logic is out of scope.
-      // console.log("Viewing route:", route);
-      // console.log("Waypoints for map:", validWaypoints);
-      navigate(`/map?waypoints=${coordinates}`);
+      navigate(`/map?waypoints=${coordinates}&routeName=${encodeURIComponent(route.name)}`);
     } catch (e) {
-      console.error("Failed to prepare route for viewing", e);
-      alert("Could not prepare route for viewing");
+      console.error("Failed to prepare route for viewing on map", e);
+      alert("Could not prepare route for map viewing. Please try again.");
     }
   };
 
-  return (
-    <div className="flex flex-col h-screen">
-      <header className="flex items-center justify-between p-4 border-b border-slate-200">
-        <Button onClick={handleNavigateBack} className="p-2">
-          <ArrowLeftIcon className="h-6 w-6" />
+  const renderRouteItem = (route: Route) => (
+    <div className="p-4 flex items-center justify-between gap-4 hover:bg-slate-50">
+      <div className="flex-grow">
+        <h2 className="font-bold text-blue-700">{route.name}</h2>
+        <p className="text-sm text-slate-500">
+          Waypoints: {route.waypointIds.length} | Created:{" "}
+          {new Date(route.createdAt).toLocaleDateString()}
+        </p>
+      </div>
+      <div className="flex gap-2">
+        <Button
+          plain
+          onClick={() => handleViewRouteOnMap(route)}
+          aria-label={`View route ${route.name} on map`}
+          className="p-2 text-slate-600 hover:text-blue-600"
+        >
+          <EyeIcon className="h-5 w-5" />
         </Button>
-        <h1 className="text-lg font-bold">Saved Routes</h1>
-        <div className="w-10"></div> {/* Placeholder */}
-      </header>
+        <Button
+          plain
+          onClick={() => openDeleteConfirmDialog(route)}
+          aria-label={`Delete route ${route.name}`}
+          className="p-2 text-slate-600 hover:text-red-600"
+        >
+          <TrashIcon className="h-5 w-5" />
+        </Button>
+      </div>
+    </div>
+  );
 
-      <main className="flex-grow overflow-y-auto">
-        {isLoading && <p className="p-4 text-center">Loading...</p>}
-        {error && <p className="p-4 text-center text-red-500">{error}</p>}
-        {!isLoading && !error && routes.length === 0 && (
-          <div className="text-center p-8">
-            <MapIcon className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-slate-700 mb-2">
-              No Saved Routes Yet
-            </h2>
-            <p className="text-slate-500 mb-6">
-              It looks like you haven't saved any routes. Create one now!
-            </p>
-            <Button color="green" onClick={() => navigate("/routes/create")}>
-              Create New Route
-            </Button>
-          </div>
-        )}
-        {!isLoading && !error && routes.length > 0 && (
-          <ul className="divide-y divide-slate-200">
-            {routes.map((route) => (
-              <li
-                key={route.id}
-                className="p-4 flex items-center justify-between gap-4 hover:bg-slate-50"
-              >
-                <div className="flex-grow">
-                  <h2 className="font-bold text-blue-700">{route.name}</h2>
-                  <p className="text-sm text-slate-500">
-                    Waypoints: {route.waypointIds.length} | Created:{" "}
-                    {new Date(route.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    plain
-                    onClick={() => handleViewRoute(route)}
-                    aria-label={`View route ${route.name}`}
-                    className="p-2 text-slate-600 hover:text-blue-600"
-                  >
-                    <EyeIcon className="h-5 w-5" />
-                  </Button>
-                  <Button
-                    plain
-                    onClick={() => openDeleteConfirmDialog(route)}
-                    aria-label={`Delete route ${route.name}`}
-                    className="p-2 text-slate-600 hover:text-red-600"
-                  >
-                    <TrashIcon className="h-5 w-5" />
-                  </Button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </main>
+  const emptyStateContent = (
+    <div className="text-center p-8">
+      <MapIcon className="h-16 w-16 text-slate-300 mx-auto mb-4" />
+      <h2 className="text-xl font-semibold text-slate-700 mb-2">
+        No Saved Routes Yet
+      </h2>
+      <p className="text-slate-500 mb-6">
+        It looks like you haven't saved any routes. Create one now!
+      </p>
+      <Button color="green" onClick={handleCreateNewRoute}>
+        Create New Route
+      </Button>
+    </div>
+  );
+
+
+  return (
+    <EntityPageLayout
+      pageTitle="Saved Routes"
+      onAdd={handleCreateNewRoute}
+      addLabel="Create New Route"
+    >
+      <ResourceList
+        items={routes}
+        renderItem={renderRouteItem}
+        isLoading={isLoading}
+        error={error} // Display consolidated error
+        emptyStateMessage={emptyStateContent} // Custom empty state component
+        itemKey="id"
+        itemClassName="" // Remove default li padding if renderRouteItem handles it
+      />
 
       {routeToDelete && (
         <Dialog
@@ -209,6 +182,6 @@ export default function SavedRoutesPage() {
           </DialogActions>
         </Dialog>
       )}
-    </div>
+    </EntityPageLayout>
   );
 }
