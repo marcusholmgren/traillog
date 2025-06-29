@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useNavigate } from "react-router";
 import { expect, it, vi } from "vitest";
 import SavedRoutesPage from "./saved_routes";
@@ -140,7 +140,9 @@ describe("SavedRoutesPage", () => {
         )
       ).toBeInTheDocument();
     });
-    const createButton = screen.getByRole("button", {
+    // The "Create New Route" button is now part of the emptyStateContent which is rendered within the main landmark
+    const mainContent = screen.getByRole("main");
+    const createButton = within(mainContent).getByRole("button", {
       name: /Create New Route/i,
     });
     expect(createButton).toBeInTheDocument();
@@ -218,19 +220,18 @@ describe("SavedRoutesPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
 
     await waitFor(() => {
+      // The hook sets a generic error message now.
+      // This error message is rendered by ResourceList, replacing the list of items.
       expect(
-        screen.getByText(
-          `Failed to delete route "${routeToDelete.name}". Please try again.`
-        )
+        screen.getByText("Failed to delete route. Please try again.")
       ).toBeInTheDocument();
     });
-    // Route should still be in the list
-    //TODO expect(screen.getByText(routeToDelete.name)).toBeInTheDocument();
-    // Dialog should still be open if error is shown within it, or closed if error is global
-    // Based on current implementation, dialog closes and error is in main page area.
-    // If error was inside dialog, this expectation would change.
-    // For now, assume it's a global error message, so dialog would close.
-    //TODO expect(screen.queryByRole("dialog")).not.toBeInTheDocument(); // Or check if it's still open depending on UX for error
+    // When ResourceList displays an error, it does not display the items.
+    // So, the route name should NOT be in the document as part of the list.
+    expect(screen.queryByText(routeToDelete.name)).not.toBeInTheDocument();
+    // Dialog should REMAIN OPEN if deletion fails, allowing user to retry or cancel.
+    // The error is displayed in the main page area by ResourceList.
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
   it("navigates to map page with correct parameters when 'View' button is clicked", async () => {
@@ -238,19 +239,21 @@ describe("SavedRoutesPage", () => {
     await waitFor(() => screen.getByText("Scenic Drive"));
 
     const routeToView = mockRoutesData[0]; // Scenic Drive, IDs: [1,2,3]
+    // Updated aria-label
     const viewButton = screen.getAllByLabelText(
-      `View route ${routeToView.name}`
+      `View route ${routeToView.name} on map`
     )[0];
     fireEvent.click(viewButton);
 
     const expectedCoordinates = `${mockWaypointsForView[1].longitude},${mockWaypointsForView[1].latitude};${mockWaypointsForView[2].longitude},${mockWaypointsForView[2].latitude};${mockWaypointsForView[3].longitude},${mockWaypointsForView[3].latitude}`;
+    const expectedRouteName = encodeURIComponent(routeToView.name);
 
     await waitFor(() => {
       expect(db.getWaypointById).toHaveBeenCalledWith(1);
       expect(db.getWaypointById).toHaveBeenCalledWith(2);
       expect(db.getWaypointById).toHaveBeenCalledWith(3);
       expect(mockNavigateFn).toHaveBeenCalledWith(
-        `/map?waypoints=${expectedCoordinates}`
+        `/map?waypoints=${expectedCoordinates}&routeName=${expectedRouteName}`
       );
     });
   });
@@ -267,13 +270,14 @@ describe("SavedRoutesPage", () => {
     await waitFor(() => screen.getByText("Scenic Drive"));
 
     const routeToView = mockRoutesData[0];
+     // Updated aria-label
     fireEvent.click(
-      screen.getAllByLabelText(`View route ${routeToView.name}`)[0]
+      screen.getAllByLabelText(`View route ${routeToView.name} on map`)[0]
     );
 
     await waitFor(() => {
       expect(window.alert).toHaveBeenCalledWith(
-        "Route requires at least 2 valid waypoints to display."
+        "Route requires at least 2 valid waypoints to display on the map."
       );
       expect(mockNavigateFn).not.toHaveBeenCalledWith(
         expect.stringContaining("/map")
