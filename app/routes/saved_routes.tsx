@@ -1,11 +1,7 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import type * as GeoJSON from 'geojson'; // Added for GeoJSON types
-import {
-  type Route,
-  // getWaypointById, // No longer needed for route geometry
-  // type Waypoint, // No longer needed for route geometry
-} from "~/services/db";
+import { useNavigate } from "react-router";
+import type * as GeoJSON from "geojson"; // Added for GeoJSON types
+import { type Route } from "~/services/db";
 import { Button } from "~/components/button";
 import { TrashIcon, EyeIcon, MapIcon } from "@heroicons/react/24/outline";
 import {
@@ -34,7 +30,6 @@ export default function SavedRoutesPage() {
   // Consolidate error display
   const error = routesError || (isDeleting && "Failed to delete route.");
 
-
   const handleCreateNewRoute = () => {
     navigate("/routes/create");
   };
@@ -61,18 +56,27 @@ export default function SavedRoutesPage() {
     }
   };
 
-  const handleViewRouteOnMap = (route: Route) => { // No longer async as we don't fetch waypoints
+  const handleViewRouteOnMap = (route: Route) => {
+    // No longer async as we don't fetch waypoints
     try {
-      if (!route.geometry || !route.geometry.coordinates || route.geometry.coordinates.length < 2) {
+      if (
+        !route.geometry ||
+        !route.geometry.coordinates ||
+        route.geometry.coordinates.length < 2
+      ) {
         alert("Route does not have enough coordinates to display on the map.");
         return;
       }
       // The coordinates are already in GeoJSON.LineString format: [[lon, lat], [lon, lat], ...]
       // The map component expects a string like "lon1,lat1;lon2,lat2;..."
       const coordinatesString = route.geometry.coordinates
-        .map(coordPair => `${coordPair[0]},${coordPair[1]}`) // Assuming coordPair is [lon, lat, alt?]
+        .map((coordPair) => `${coordPair[0]},${coordPair[1]}`) // Assuming coordPair is [lon, lat, alt?]
         .join(";");
-      navigate(`/map?waypoints=${coordinatesString}&routeName=${encodeURIComponent(route.name)}`);
+      navigate(
+        `/map?waypoints=${coordinatesString}&routeName=${encodeURIComponent(
+          route.name
+        )}`
+      );
     } catch (e) {
       console.error("Failed to prepare route for viewing on map", e);
       alert("Could not prepare route for map viewing. Please try again.");
@@ -84,7 +88,7 @@ export default function SavedRoutesPage() {
       <div className="flex-grow">
         <h2 className="font-bold text-blue-700">{route.name}</h2>
         <p className="text-sm text-slate-500">
-          Points: {route.geometry.coordinates.length} | Created:{" "}
+          {/* Points: {route.geometry.coordinates.length} | Created:{" "} */}
           {new Date(route.createdAt).toLocaleDateString()}
         </p>
       </div>
@@ -123,7 +127,6 @@ export default function SavedRoutesPage() {
       </Button>
     </div>
   );
-
 
   return (
     <EntityPageLayout
