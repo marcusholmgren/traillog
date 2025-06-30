@@ -72,41 +72,110 @@ export default function AddWaypoint() {
   const handleCancel = () => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null; // Also nullify the ref
     }
+    setIsCapturing(false); // Ensure camera UI is hidden
     navigate(-1);
   };
 
-  const handleCaptureImage = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
+  const handleCaptureImageClick = async () => {
+    setImageError(null);
+    // Don't clear capturedImage here, user might want to keep existing if camera fails
+
+    if (
+      "MediaStream" in window &&
+      "ImageCapture" in window &&
+      navigator.mediaDevices &&
+      navigator.mediaDevices.getUserMedia
+    ) {
+      try {
+        setIsCapturing(true);
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" },
+        });
+        streamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+        return;
+      } catch (err: any) {
+        console.error("Error using ImageCapture API:", err);
+        setImageError(
+          `Camera access denied or not available: ${err.message}. You can try choosing a file instead.`
+        );
+        setIsCapturing(false);
       }
-      setIsCapturing(true);
-    } catch (err) {
-      console.error("Error accessing camera:", err);
-      setImageError("Could not access camera.");
+    } else {
+      handleChooseFileClick();
+      setImageError("Live camera not supported. Please choose a file.");
     }
   };
 
-  const handleTakePhoto = async () => {
-    if (videoRef.current) {
-      const canvas = document.createElement("canvas");
-      canvas.width = videoRef.current.videoWidth;
-      canvas.height = videoRef.current.videoHeight;
-      const context = canvas.getContext("2d");
-      if (context) {
-        context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-        setCapturedImage(canvas.toDataURL("image/jpeg"));
+  const handleTakePhotoFromStream = async () => {
+    if (streamRef.current) {
+      try {
+        const imageCapture = new ImageCapture(
+          streamRef.current.getVideoTracks()[0]
+        );
+        const blob = await imageCapture.takePhoto();
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setCapturedImage(reader.result as string);
+          setImageError(null);
+          setSuccessMessage("Image captured! Save to apply changes.");
+        };
+        reader.onerror = () => {
+          setImageError("Failed to process captured image.");
+        };
+        reader.readAsDataURL(blob);
+      } catch (err: any) {
+        setImageError(`Could not take photo: ${err.message}`);
+      } finally {
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach((track) => track.stop());
+          streamRef.current = null;
+        }
+        setIsCapturing(false);
       }
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
-      }
-      setIsCapturing(false);
     }
+  };
+
+  const handleCancelCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    setIsCapturing(false);
+    setImageError(null);
+  };
+
+  const handleChooseFileClick = () => {
+    setImageError(null);
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.onchange = (event) => {
+      const target = event.target as HTMLInputElement;
+      if (target.files && target.files.length > 0) {
+        const file = target.files[0];
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setCapturedImage(reader.result as string);
+          setSuccessMessage("Image selected. Save to apply changes.");
+        };
+        reader.onerror = () => {
+          setImageError("Failed to read image file.");
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+    input.click();
+  };
+
+  const handleRemoveImageClick = () => {
+    setCapturedImage(null);
+    setImageError(null);
+    setSuccessMessage("Image marked for removal. Save to apply changes.");
   };
 
   return (
@@ -161,43 +230,86 @@ export default function AddWaypoint() {
           />
         </Field>
 
+        {/* Image Display and Capture Section */}
         <div className="space-y-2">
-          <label>Photo</label>
-          <div className="flex items-center gap-4">
-            <Button type="button" onClick={handleCaptureImage}>
-              <CameraIcon className="h-5 w-5 mr-2" />
-              Take Photo
-            </Button>
-            {capturedImage && (
+          <Label>Photo</Label>
+          {isCapturing && (
+            <div className="fixed inset-0 bg-black bg-opacity-75 flex flex-col items-center justify-center z-50 p-4">
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                className="w-full max-w-md aspect-[4/3] rounded-lg"
+              ></video>
+              <div className="flex gap-4 mt-4">
+                <Button
+                  type="button"
+                  onClick={handleTakePhotoFromStream}
+                  // className="flex items-center justify-center rounded-lg h-12 px-5 bg-green-500 text-white font-bold"
+                >
+                  Take Photo
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleCancelCamera}
+                  variant="secondary"
+                  // className="flex items-center justify-center rounded-lg h-12 px-5 bg-red-500 text-white font-bold"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+          <div className="w-full aspect-[3/2] rounded-lg bg-slate-200 flex items-center justify-center mb-2">
+            {capturedImage ? (
               <img
                 src={capturedImage}
-                alt="Captured waypoint"
-                className="h-20 w-20 rounded-lg object-cover"
+                alt="Waypoint"
+                className="w-full h-full object-cover rounded-lg"
               />
+            ) : (
+              <p className="text-slate-500">No image provided.</p>
+            )}
+          </div>
+          {imageError && (
+            <p className="text-red-500 text-sm pb-2">{imageError}</p>
+          )}
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              onClick={handleCaptureImageClick}
+              className="flex-grow min-w-[calc(50%-0.25rem)]"
+            >
+              <CameraIcon className="h-5 w-5 mr-2" />
+              Open Camera
+            </Button>
+            <Button
+              type="button"
+              onClick={handleChooseFileClick}
+              variant="secondary"
+              className="flex-grow min-w-[calc(50%-0.25rem)]"
+            >
+              Choose from File
+            </Button>
+            {capturedImage && (
+              <Button
+                type="button"
+                onClick={handleRemoveImageClick}
+                variant="destructive"
+                className="w-full mt-2"
+              >
+                Remove Image
+              </Button>
             )}
           </div>
         </div>
+        {/* End of Image Display and Capture Section */}
 
         {error && <p className="text-red-500">{error}</p>}
-        {imageError && <p className="text-red-500">{imageError}</p>}
-        {successMessage && <p className="text-green-500">{successMessage}</p>}
+        {successMessage && !error && <p className="text-green-500">{successMessage}</p>} {/* Display success only if no general error */}
       </main>
 
-      {isCapturing && (
-        <div className="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center">
-          <video
-            ref={videoRef}
-            autoPlay
-            className="w-full h-full object-cover"
-          ></video>
-          <div className="absolute bottom-4 flex gap-4">
-            <Button onClick={handleTakePhoto}>Take Photo</Button>
-            <Button onClick={() => setIsCapturing(false)}>
-              <XMarkIcon className="h-6 w-6" />
-            </Button>
-          </div>
-        </div>
-      )}
+      {/* Removed old isCapturing block as it's integrated above */}
 
       <footer className="p-4 border-t border-slate-200 flex justify-end gap-4">
         <Button type="button" variant="secondary" onClick={handleCancel}>
