@@ -8,6 +8,7 @@ import { Field, Label } from "~/components/fieldset";
 import {
   ArrowLeftIcon,
   CameraIcon,
+  PhotoIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 
@@ -198,7 +199,6 @@ export default function AddWaypoint() {
             required
           />
         </Field>
-
         <Field>
           <Label>Coordinates</Label>
           <Input
@@ -211,7 +211,6 @@ export default function AddWaypoint() {
             readOnly
           />
         </Field>
-
         <Field>
           <Label>Altitude (meters)</Label>
           <Input
@@ -220,7 +219,6 @@ export default function AddWaypoint() {
             onChange={(e) => setAltitude(parseFloat(e.target.value))}
           />
         </Field>
-
         <Field>
           <Label>Notes</Label>
           <Textarea
@@ -229,10 +227,9 @@ export default function AddWaypoint() {
             rows={4}
           />
         </Field>
-
         {/* Image Display and Capture Section */}
         <div className="space-y-2">
-          <Label>Photo</Label>
+          <p>Photo</p>
           {isCapturing && (
             <div className="fixed inset-0 bg-black bg-opacity-75 flex flex-col items-center justify-center z-50 p-4">
               <video
@@ -289,6 +286,7 @@ export default function AddWaypoint() {
               variant="secondary"
               className="flex-grow min-w-[calc(50%-0.25rem)]"
             >
+              <PhotoIcon className="h-5 w-5 mr-2" />
               Choose from File
             </Button>
             {capturedImage && (
@@ -304,9 +302,11 @@ export default function AddWaypoint() {
           </div>
         </div>
         {/* End of Image Display and Capture Section */}
-
         {error && <p className="text-red-500">{error}</p>}
-        {successMessage && !error && <p className="text-green-500">{successMessage}</p>} {/* Display success only if no general error */}
+        {successMessage && !error && (
+          <p className="text-green-500">{successMessage}</p>
+        )}{" "}
+        {/* Display success only if no general error */}
       </main>
 
       {/* Removed old isCapturing block as it's integrated above */}
