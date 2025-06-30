@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+import type * as GeoJSON from 'geojson';
 import {
   getSavedWaypoints,
   type Waypoint,
@@ -102,8 +103,20 @@ export default function CreateRoute() {
 
     setIsSaving(true);
     try {
-      const waypointIds = selectedWaypoints.map(wp => wp.id);
-      await addRoute(currentRouteName.trim(), waypointIds);
+      const coordinates: GeoJSON.Position[] = selectedWaypoints.map(wp => {
+        const coords = [wp.longitude, wp.latitude];
+        if (wp.altitude !== undefined && wp.altitude !== null) {
+          coords.push(wp.altitude);
+        }
+        return coords;
+      });
+
+      const lineStringGeometry: GeoJSON.LineString = {
+        type: "LineString",
+        coordinates: coordinates,
+      };
+
+      await addRoute(currentRouteName.trim(), lineStringGeometry);
       alert(`Route "${currentRouteName.trim()}" saved successfully!`);
       // Optionally, navigate to a saved routes page or clear selection
       // navigate('/saved-routes');

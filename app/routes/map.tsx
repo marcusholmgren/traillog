@@ -1,5 +1,6 @@
 import React, { useEffect, useState, Suspense } from "react";
 import L from "leaflet";
+import { useSearchParams } from "react-router-dom"; // Import useSearchParams
 // Added GeoJSON import
 import {
   MapContainer,
@@ -9,13 +10,14 @@ import {
   Popup,
   GeoJSON,
   LayersControl,
+  // Polyline, // Might use GeoJSON component instead
 } from "react-leaflet";
 import {
   getSavedWaypoints,
   waypointsToGeoJSON,
   type Waypoint,
 } from "../services/db"; // Import db services
-import type { Feature, Point } from "geojson"; // Import GeoJSON types
+import type { Feature, Point, LineString } from "geojson"; // Import GeoJSON types, added LineString
 
 // Fix for default icon issue with webpack
 if (typeof window !== "undefined") {
@@ -97,10 +99,58 @@ export default function MapPage() {
 
 // New component to render the actual map with lazy-loaded components
 function ActualMap({ userPosition }: { userPosition: UserPosition }) {
+  const [searchParams] = useSearchParams();
+  const map = useMap(); // Get map instance for fitBounds
+
   const [waypointsGeoJSON, setWaypointsGeoJSON] =
     useState<GeoJSON.FeatureCollection<GeoJSON.Point, Waypoint> | null>(null);
+  const [routeToDisplayGeoJSON, setRouteToDisplayGeoJSON] =
+    useState<GeoJSON.Feature<GeoJSON.LineString> | null>(null);
+  const [routeName, setRouteName] = useState<string | null>(null);
 
   useEffect(() => {
+    // Logic for displaying a specific route from URL params
+    const waypointsParam = searchParams.get("waypoints");
+    const nameParam = searchParams.get("routeName");
+
+    if (waypointsParam) {
+      setRouteName(nameParam || "Route");
+      try {
+        const coordinatePairs = waypointsParam.split(';').map(pairStr => {
+          const parts = pairStr.split(',');
+          return [parseFloat(parts[0]), parseFloat(parts[1])]; // lon, lat
+        });
+
+        if (coordinatePairs.length >= 2) {
+          const lineStringGeom: GeoJSON.LineString = {
+            type: "LineString",
+            coordinates: coordinatePairs,
+          };
+          const routeFeature: GeoJSON.Feature<GeoJSON.LineString> = {
+            type: "Feature",
+            properties: nameParam ? { name: nameParam } : {},
+            geometry: lineStringGeom,
+          };
+          setRouteToDisplayGeoJSON(routeFeature);
+
+          // Fit map to route bounds
+          const bounds = L.geoJSON(routeFeature).getBounds();
+          if (bounds.isValid()) {
+            map.fitBounds(bounds, { padding: [50, 50] });
+          }
+
+        } else {
+          setRouteToDisplayGeoJSON(null); // Not enough points for a line
+        }
+      } catch (e) {
+        console.error("Error parsing waypoints from URL for route display:", e);
+        setRouteToDisplayGeoJSON(null);
+      }
+    } else {
+      setRouteToDisplayGeoJSON(null); // No waypoints param, so no specific route to display
+    }
+
+    // Existing logic to fetch and display all saved waypoints
     async function fetchAndSetWaypoints() {
       try {
         const waypoints = await getSavedWaypoints();
@@ -175,6 +225,15 @@ function ActualMap({ userPosition }: { userPosition: UserPosition }) {
           onEachFeature={onEachWaypointFeature}
         />
       )}
-    </MapContainer>
-  );
-}
++      {routeToDisplayGeoJSON && (
++        <GeoJSON
++          key={JSON.stringify(routeToDisplayGeoJSON)} // Force re-render if route changes
++          data={routeToDisplayGeoJSON}
++          style={() => ({ color: 'red', weight: 3, opacity: 0.7 })}
++        >
++          {routeName && <Popup>{routeName}</Popup>}
++        </GeoJSON>
++      )}
++    </MapContainer>
++  );
++}
