@@ -2,6 +2,8 @@ import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 
 // --- Type Definitions ---
 
+import type * as GeoJSON from 'geojson';
+
 export interface Waypoint {
   id: number;
   name?: string;
@@ -23,7 +25,7 @@ export interface WaypointUpdate {
 export interface Route {
   id: number;
   name: string;
-  waypointIds: number[];
+  geometry: GeoJSON.LineString; // Changed from waypointIds
   createdAt: number;
 }
 
@@ -187,12 +189,12 @@ export async function importWaypoints(geoJsonString: string): Promise<void> {
 
 export async function addRoute(
   routeName: string,
-  waypointIds: number[]
+  geometry: GeoJSON.LineString // Changed from waypointIds
 ): Promise<number> {
   const db = await openWaypointsDB();
   const route: Omit<Route, "id"> = {
     name: routeName,
-    waypointIds: waypointIds,
+    geometry: geometry, // Changed from waypointIds
     createdAt: Date.now(),
   };
   const id = await db.add(STORE_NAME_ROUTES, route as Route);
@@ -219,22 +221,54 @@ export async function deleteRoute(id: number): Promise<void> {
 
 export async function exportRoutes(): Promise<string> {
   const routes = await getSavedRoutes();
-  return JSON.stringify(routes, null, 2);
+  const features: GeoJSON.Feature<GeoJSON.LineString>[] = routes.map(route => ({
+    type: "Feature",
+    properties: {
+      id: route.id,
+      name: route.name,
+      createdAt: route.createdAt,
+      // Potentially add other relevant properties from the route object if needed
+    },
+    geometry: route.geometry,
+  }));
+
+  const featureCollection: GeoJSON.FeatureCollection<GeoJSON.LineString> = {
+    type: "FeatureCollection",
+    features: features,
+  };
+  return JSON.stringify(featureCollection, null, 2);
 }
 
 export async function importRoutes(jsonString: string): Promise<void> {
-  const routes: Route[] = JSON.parse(jsonString);
+  const featureCollection: GeoJSON.FeatureCollection<GeoJSON.LineString> = JSON.parse(jsonString);
   const db = await openWaypointsDB();
   const tx = db.transaction(STORE_NAME_ROUTES, "readwrite");
-  for (const route of routes) {
-    // We can't use addRoute directly as it creates a new createdAt timestamp
-    // and we want to preserve the original one.
-    await tx.store.add({
-      // id: route.id, // Let idb auto-increment the id to avoid conflicts
-      name: route.name,
-      waypointIds: route.waypointIds,
-      createdAt: route.createdAt,
-    });
+
+  if (featureCollection && featureCollection.features && Array.isArray(featureCollection.features)) {
+    for (const feature of featureCollection.features) {
+      if (feature && feature.geometry && feature.geometry.type === "LineString") {
+        const routeName = feature.properties?.name || "Imported Route";
+        // Use current time for createdAt if not provided in properties, to ensure it's always a number
+        const routeCreatedAt = typeof feature.properties?.createdAt === 'number' ? feature.properties.createdAt : Date.now();
+        const routeGeometry = feature.geometry as GeoJSON.LineString; // Cast to be sure
+
+        if (!routeGeometry.coordinates || !Array.isArray(routeGeometry.coordinates)) {
+          console.warn("Skipping route with invalid coordinates in geometry:", feature);
+          continue;
+        }
+
+        const newRoute: Omit<Route, "id"> = {
+          name: routeName,
+          geometry: routeGeometry,
+          createdAt: routeCreatedAt,
+        };
+        await tx.store.add(newRoute as Route);
+      } else {
+        console.warn("Skipping non-LineString feature or feature with invalid geometry during route import:", feature);
+      }
+    }
+  } else {
+    console.warn("ImportRoutes: Input JSON is not a valid FeatureCollection or has no features.", featureCollection);
   }
   await tx.done;
 }

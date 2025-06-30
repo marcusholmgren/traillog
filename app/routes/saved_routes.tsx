@@ -1,10 +1,7 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  type Route,
-  getWaypointById,
-  type Waypoint,
-} from "~/services/db";
+import { useNavigate } from "react-router";
+import type * as GeoJSON from "geojson"; // Added for GeoJSON types
+import { type Route } from "~/services/db";
 import { Button } from "~/components/button";
 import { TrashIcon, EyeIcon, MapIcon } from "@heroicons/react/24/outline";
 import {
@@ -33,7 +30,6 @@ export default function SavedRoutesPage() {
   // Consolidate error display
   const error = routesError || (isDeleting && "Failed to delete route.");
 
-
   const handleCreateNewRoute = () => {
     navigate("/routes/create");
   };
@@ -55,30 +51,32 @@ export default function SavedRoutesPage() {
     } catch (err) {
       console.error("Error deleting route from UI:", err);
       // Error will be set by the hook, or you can set a specific message here
-      // For instance, if the hook's error is generic:
-      // setError(`Failed to delete route "${routeToDelete.name}". Please try again.`);
     } finally {
       setIsDeleting(false);
     }
   };
 
-  const handleViewRouteOnMap = async (route: Route) => {
+  const handleViewRouteOnMap = (route: Route) => {
+    // No longer async as we don't fetch waypoints
     try {
-      const waypoints = await Promise.all(
-        route.waypointIds.map((id) => getWaypointById(id))
-      );
-      const validWaypoints = waypoints.filter(
-        (wp) => wp !== undefined
-      ) as Waypoint[];
-
-      if (validWaypoints.length < 2) {
-        alert("Route requires at least 2 valid waypoints to display on the map.");
+      if (
+        !route.geometry ||
+        !route.geometry.coordinates ||
+        route.geometry.coordinates.length < 2
+      ) {
+        alert("Route does not have enough coordinates to display on the map.");
         return;
       }
-      const coordinates = validWaypoints
-        .map((wp) => `${wp.longitude},${wp.latitude}`)
+      // The coordinates are already in GeoJSON.LineString format: [[lon, lat], [lon, lat], ...]
+      // The map component expects a string like "lon1,lat1;lon2,lat2;..."
+      const coordinatesString = route.geometry.coordinates
+        .map((coordPair) => `${coordPair[0]},${coordPair[1]}`) // Assuming coordPair is [lon, lat, alt?]
         .join(";");
-      navigate(`/map?waypoints=${coordinates}&routeName=${encodeURIComponent(route.name)}`);
+      navigate(
+        `/map?waypoints=${coordinatesString}&routeName=${encodeURIComponent(
+          route.name
+        )}`
+      );
     } catch (e) {
       console.error("Failed to prepare route for viewing on map", e);
       alert("Could not prepare route for map viewing. Please try again.");
@@ -90,7 +88,7 @@ export default function SavedRoutesPage() {
       <div className="flex-grow">
         <h2 className="font-bold text-blue-700">{route.name}</h2>
         <p className="text-sm text-slate-500">
-          Waypoints: {route.waypointIds.length} | Created:{" "}
+          {/* Points: {route.geometry.coordinates.length} | Created:{" "} */}
           {new Date(route.createdAt).toLocaleDateString()}
         </p>
       </div>
@@ -130,7 +128,6 @@ export default function SavedRoutesPage() {
     </div>
   );
 
-
   return (
     <EntityPageLayout
       pageTitle="Saved Routes"
@@ -160,8 +157,8 @@ export default function SavedRoutesPage() {
           </DialogDescription>
           <DialogBody>
             <p>
-              This route contains {routeToDelete.waypointIds.length}{" "}
-              waypoint(s).
+              This route consists of {routeToDelete.geometry.coordinates.length}{" "}
+              coordinate point(s).
             </p>
           </DialogBody>
           <DialogActions>
