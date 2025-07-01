@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
-import type * as GeoJSON from "geojson"; // Added for GeoJSON types
+import { useNavigate } from "react-router-dom";
+import type * as GeoJSON from "geojson";
 import { type Route } from "~/services/db";
 import { Button } from "~/components/button";
 import { TrashIcon, EyeIcon, MapIcon } from "@heroicons/react/24/outline";
@@ -11,23 +11,26 @@ import {
   DialogDescription,
   DialogTitle,
 } from "~/components/dialog";
+import {
+  Alert,
+  AlertActions,
+  AlertBody,
+  AlertTitle,
+  AlertDescription,
+} from "~/components/alert";
 import { useRoutes } from "~/hooks/useRoutes";
 import { EntityPageLayout } from "~/components/entity-page-layout";
 import { ResourceList } from "~/components/resource-list";
+import { useAlert } from "~/hooks/useAlert";
 
 export default function SavedRoutesPage() {
   const navigate = useNavigate();
-  const {
-    routes,
-    isLoading,
-    error: routesError, // Renamed to avoid conflict
-    deleteRoute,
-  } = useRoutes();
+  const { routes, isLoading, error: routesError, deleteRoute } = useRoutes();
+  const { alert, showAlert } = useAlert();
 
   const [routeToDelete, setRouteToDelete] = useState<Route | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Consolidate error display
   const error = routesError || (isDeleting && "Failed to delete route.");
 
   const handleCreateNewRoute = () => {
@@ -46,31 +49,31 @@ export default function SavedRoutesPage() {
     if (!routeToDelete) return;
     setIsDeleting(true);
     try {
-      await deleteRoute(routeToDelete.id); // Hook handles UI update
+      await deleteRoute(routeToDelete.id);
       closeDeleteConfirmDialog();
     } catch (err) {
       console.error("Error deleting route from UI:", err);
-      // Error will be set by the hook, or you can set a specific message here
     } finally {
       setIsDeleting(false);
     }
   };
 
   const handleViewRouteOnMap = (route: Route) => {
-    // No longer async as we don't fetch waypoints
     try {
       if (
         !route.geometry ||
         !route.geometry.coordinates ||
         route.geometry.coordinates.length < 2
       ) {
-        alert("Route does not have enough coordinates to display on the map.");
+        showAlert({
+          title: "Cannot View Route",
+          message:
+            "Route does not have enough coordinates to display on the map.",
+        });
         return;
       }
-      // The coordinates are already in GeoJSON.LineString format: [[lon, lat], [lon, lat], ...]
-      // The map component expects a string like "lon1,lat1;lon2,lat2;..."
       const coordinatesString = route.geometry.coordinates
-        .map((coordPair) => `${coordPair[0]},${coordPair[1]}`) // Assuming coordPair is [lon, lat, alt?]
+        .map((coordPair) => `${coordPair[0]},${coordPair[1]}`)
         .join(";");
       navigate(
         `/map?waypoints=${coordinatesString}&routeName=${encodeURIComponent(
@@ -79,7 +82,10 @@ export default function SavedRoutesPage() {
       );
     } catch (e) {
       console.error("Failed to prepare route for viewing on map", e);
-      alert("Could not prepare route for map viewing. Please try again.");
+      showAlert({
+        title: "Error",
+        message: "Could not prepare route for map viewing. Please try again.",
+      });
     }
   };
 
@@ -88,7 +94,7 @@ export default function SavedRoutesPage() {
       <div className="flex-grow">
         <h2 className="font-bold text-blue-700">{route.name}</h2>
         <p className="text-sm text-slate-500">
-          {/* Points: {route.geometry.coordinates.length} | Created:{" "} */}
+          Points: {route.geometry?.coordinates?.length ?? 0} | Created:{" "}
           {new Date(route.createdAt).toLocaleDateString()}
         </p>
       </div>
@@ -138,10 +144,10 @@ export default function SavedRoutesPage() {
         items={routes}
         renderItem={renderRouteItem}
         isLoading={isLoading}
-        error={error} // Display consolidated error
-        emptyStateMessage={emptyStateContent} // Custom empty state component
+        error={error}
+        emptyStateMessage={emptyStateContent}
         itemKey="id"
-        itemClassName="" // Remove default li padding if renderRouteItem handles it
+        itemClassName=""
       />
 
       {routeToDelete && (
@@ -157,8 +163,9 @@ export default function SavedRoutesPage() {
           </DialogDescription>
           <DialogBody>
             <p>
-              This route consists of {routeToDelete.geometry.coordinates.length}{" "}
-              coordinate point(s).
+              This route consists of{" "}
+              {routeToDelete.geometry?.coordinates?.length ?? 0} coordinate
+              point(s).
             </p>
           </DialogBody>
           <DialogActions>
@@ -178,6 +185,15 @@ export default function SavedRoutesPage() {
             </Button>
           </DialogActions>
         </Dialog>
+      )}
+      {alert.isOpen && (
+        <Alert open={alert.isOpen} onClose={alert.hide}>
+          <AlertTitle>{alert.title}</AlertTitle>
+          <AlertDescription>{alert.message}</AlertDescription>
+          <AlertActions>
+            <Button onClick={alert.hide}>OK</Button>
+          </AlertActions>
+        </Alert>
       )}
     </EntityPageLayout>
   );
