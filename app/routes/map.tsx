@@ -10,6 +10,7 @@ import {
   GeoJSON,
   LayersControl,
 } from "react-leaflet";
+import CompassIcon from "../components/CompassIcon";
 import {
   getSavedWaypoints,
   waypointsToGeoJSON,
@@ -205,6 +206,7 @@ function ActualMap({ userPosition }: { userPosition: UserPosition }) {
  */
 export default function MapPage() {
   const [position, setPosition] = useState<UserPosition | null>(null);
+  const [heading, setHeading] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -220,6 +222,7 @@ export default function MapPage() {
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
       });
+      setHeading(location.coords.heading);
       setLoading(false);
     };
 
@@ -236,11 +239,19 @@ export default function MapPage() {
       setLoading(false);
     };
 
-    navigator.geolocation.getCurrentPosition(successHandler, errorHandler, {
-      enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 0,
-    });
+    const watchId = navigator.geolocation.watchPosition(
+      successHandler,
+      errorHandler,
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
+    );
+
+    return () => {
+      navigator.geolocation.clearWatch(watchId);
+    };
   }, []);
 
   if (loading) {
@@ -251,14 +262,21 @@ export default function MapPage() {
     return <p style={{ color: "red" }}>{error}</p>;
   }
 
+  // ... (rest of the imports and component code)
+
+  // Inside MapPage component, before the return statement for when position is available:
+
   if (position) {
     return (
-      <div style={{ height: "100vh", width: "100%" }}>
+      <div style={{ height: "100vh", width: "100%", position: "relative" }}>
+        {" "}
+        {/* Added position: "relative" */}
         <h1>Map</h1>
         {error && <p style={{ color: "orange" }}>{error}</p>}
         <Suspense fallback={<p>Loading map...</p>}>
           <ActualMap userPosition={position} />
         </Suspense>
+        <CompassIcon heading={heading} />
       </div>
     );
   }
