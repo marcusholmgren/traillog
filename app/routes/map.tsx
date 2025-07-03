@@ -10,7 +10,7 @@ import {
   GeoJSON,
   LayersControl,
 } from "react-leaflet";
-import CompassIcon from "../components/CompassIcon"; // Moved import to top
+import CompassIcon from "../components/CompassIcon";
 import {
   getSavedWaypoints,
   waypointsToGeoJSON,
@@ -262,19 +262,21 @@ export default function MapPage() {
     return <p style={{ color: "red" }}>{error}</p>;
   }
 
-// ... (rest of the imports and component code)
+  // ... (rest of the imports and component code)
 
-// Inside MapPage component, before the return statement for when position is available:
+  // Inside MapPage component, before the return statement for when position is available:
 
   if (position) {
     return (
-      <div style={{ height: "100vh", width: "100%", position: "relative" }}> {/* Added position: "relative" */}
+      <div style={{ height: "100vh", width: "100%", position: "relative" }}>
+        {" "}
+        {/* Added position: "relative" */}
         <h1>Map</h1>
         {error && <p style={{ color: "orange" }}>{error}</p>}
         <Suspense fallback={<p>Loading map...</p>}>
           <ActualMap userPosition={position} />
         </Suspense>
-        <CompassIcon heading={heading} /> {/* Added CompassIcon */}
+        <CompassIcon heading={heading} />
       </div>
     );
   }
