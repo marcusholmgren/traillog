@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { addWaypoint } from "../services/db";
+import { useNavigate } from "react-router";
+import { addWaypoint } from "~/services/db";
 import { Button } from "~/components/button";
 import { Input } from "~/components/input";
 import { Textarea } from "~/components/textarea";

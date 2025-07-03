@@ -1,4 +1,4 @@
-import { useNavigate, NavLink } from "react-router-dom";
+import { useNavigate, NavLink } from "react-router";
 import { type Waypoint, waypointsToGeoJSON, getSavedWaypoints as dbGetSavedWaypoints } from "~/services/db";
 import { Button } from "~/components/button";
 import {

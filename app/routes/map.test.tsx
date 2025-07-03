@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen, waitFor, act } from "@testing-library/react";
 import MapPage from "./map";
-import { MemoryRouter } from "react-router-dom"; // Required for components using useSearchParams
+import { MemoryRouter } from "react-router"; // Required for components using useSearchParams
 
 import { vi } from "vitest";
 

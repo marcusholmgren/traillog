@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import type * as GeoJSON from "geojson";
 import { type Route } from "~/services/db";
 import { Button } from "~/components/button";

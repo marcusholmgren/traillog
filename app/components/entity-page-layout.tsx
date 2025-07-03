@@ -1,5 +1,5 @@
 import type React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { Button } from "~/components/button";
 import { ArrowLeftIcon, PlusIcon } from "@heroicons/react/24/outline";
 

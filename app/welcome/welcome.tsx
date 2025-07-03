@@ -1,6 +1,7 @@
 import logoDark from "./logo-dark.svg";
 import logoLight from "./logo-light.svg";
 import { NavLink } from "react-router";
+import CompassIcon from "~/components/CompassIcon";
 
 export function Welcome() {
   return (
@@ -41,6 +42,9 @@ export function Welcome() {
               ))}
             </ul>
           </nav>
+          <div className="bg-white">
+            <CompassIcon heading={45} />
+          </div>
           <div className="py-3">
             <div className="grid grid-cols-2 gap-4">
               <NavLink to="/map" viewTransition>
