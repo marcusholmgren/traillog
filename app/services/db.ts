@@ -25,7 +25,7 @@ export interface WaypointUpdate {
 export interface Route {
   id: number;
   name: string;
-  geometry: GeoJSON.LineString; // Changed from waypointIds
+  geometry: GeoJSON.LineString | GeoJSON.Polygon; // Changed from waypointIds
   createdAt: number;
 }
 
@@ -189,7 +189,7 @@ export async function importWaypoints(geoJsonString: string): Promise<void> {
 
 export async function addRoute(
   routeName: string,
-  geometry: GeoJSON.LineString // Changed from waypointIds
+  geometry: GeoJSON.LineString | GeoJSON.Polygon // Changed from waypointIds
 ): Promise<number> {
   const db = await openWaypointsDB();
   const route: Omit<Route, "id"> = {
@@ -221,7 +221,7 @@ export async function deleteRoute(id: number): Promise<void> {
 
 export async function exportRoutes(): Promise<string> {
   const routes = await getSavedRoutes();
-  const features: GeoJSON.Feature<GeoJSON.LineString>[] = routes.map(route => ({
+  const features: GeoJSON.Feature<GeoJSON.LineString | GeoJSON.Polygon>[] = routes.map(route => ({
     type: "Feature",
     properties: {
       id: route.id,
@@ -232,7 +232,7 @@ export async function exportRoutes(): Promise<string> {
     geometry: route.geometry,
   }));
 
-  const featureCollection: GeoJSON.FeatureCollection<GeoJSON.LineString> = {
+  const featureCollection: GeoJSON.FeatureCollection<GeoJSON.LineString | GeoJSON.Polygon> = {
     type: "FeatureCollection",
     features: features,
   };
@@ -240,17 +240,17 @@ export async function exportRoutes(): Promise<string> {
 }
 
 export async function importRoutes(jsonString: string): Promise<void> {
-  const featureCollection: GeoJSON.FeatureCollection<GeoJSON.LineString> = JSON.parse(jsonString);
+  const featureCollection: GeoJSON.FeatureCollection<GeoJSON.LineString | GeoJSON.Polygon> = JSON.parse(jsonString);
   const db = await openWaypointsDB();
   const tx = db.transaction(STORE_NAME_ROUTES, "readwrite");
 
   if (featureCollection && featureCollection.features && Array.isArray(featureCollection.features)) {
     for (const feature of featureCollection.features) {
-      if (feature && feature.geometry && feature.geometry.type === "LineString") {
+      if (feature && feature.geometry && (feature.geometry.type === "LineString" || feature.geometry.type === "Polygon")) {
         const routeName = feature.properties?.name || "Imported Route";
         // Use current time for createdAt if not provided in properties, to ensure it's always a number
         const routeCreatedAt = typeof feature.properties?.createdAt === 'number' ? feature.properties.createdAt : Date.now();
-        const routeGeometry = feature.geometry as GeoJSON.LineString; // Cast to be sure
+        const routeGeometry = feature.geometry as GeoJSON.LineString | GeoJSON.Polygon; // Cast to be sure
 
         if (!routeGeometry.coordinates || !Array.isArray(routeGeometry.coordinates)) {
           console.warn("Skipping route with invalid coordinates in geometry:", feature);
@@ -264,7 +264,7 @@ export async function importRoutes(jsonString: string): Promise<void> {
         };
         await tx.store.add(newRoute as Route);
       } else {
-        console.warn("Skipping non-LineString feature or feature with invalid geometry during route import:", feature);
+        console.warn("Skipping non-LineString/Polygon feature or feature with invalid geometry during route import:", feature);
       }
     }
   } else {
