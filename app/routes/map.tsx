@@ -43,7 +43,7 @@ type UserPosition = {
 function MapController({
                            routeGeoJSON,
                        }: {
-    routeGeoJSON: GeoJSON.Feature<GeoJSON.LineString> | null;
+    routeGeoJSON: GeoJSON.Feature<GeoJSON.LineString | GeoJSON.Polygon> | null;
 }) {
     const map = useMap();
 
@@ -68,7 +68,7 @@ function ActualMap({userPosition}: { userPosition: UserPosition }) {
     const [waypointsGeoJSON, setWaypointsGeoJSON] =
         useState<GeoJSON.FeatureCollection<GeoJSON.Point, Waypoint> | null>(null);
     const [routeToDisplayGeoJSON, setRouteToDisplayGeoJSON] =
-        useState<GeoJSON.Feature<GeoJSON.LineString> | null>(null);
+        useState<GeoJSON.Feature<GeoJSON.LineString | GeoJSON.Polygon> | null>(null);
     const [routeName, setRouteName] = useState<string | null>(null);
 
     useEffect(() => {
@@ -189,9 +189,14 @@ function ActualMap({userPosition}: { userPosition: UserPosition }) {
 
                 {routeToDisplayGeoJSON && (
                     <GeoJSON
-                        key={JSON.stringify(routeToDisplayGeoJSON.geometry.coordinates)}
+                        key={JSON.stringify(routeToDisplayGeoJSON.geometry)} // Use entire geometry for key
                         data={routeToDisplayGeoJSON}
-                        style={() => ({color: "red", weight: 4, opacity: 0.8})}
+                        style={(feature) => {
+                            if (feature?.geometry.type === "Polygon") {
+                                return { color: "blue", weight: 2, opacity: 0.5, fillColor: "lightblue", fillOpacity: 0.3 };
+                            }
+                            return { color: "red", weight: 4, opacity: 0.8 }; // Default for LineString
+                        }}
                     >
                         {routeName && <Popup>{routeName}</Popup>}
                     </GeoJSON>
