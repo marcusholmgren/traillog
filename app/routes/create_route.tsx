@@ -7,6 +7,10 @@ import {
   addRoute,
   waypointsToGeoJSON,
 } from "~/services/db";
+import {
+  calculateTotalRouteDistance,
+  type Coordinates,
+} from "~/services/geolocation";
 import { Button } from "~/components/button";
 import { Checkbox } from "~/components/checkbox";
 import { Input } from "~/components/input";
@@ -41,6 +45,7 @@ export default function CreateRoute() {
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isPromptingName, setIsPromptingName] = useState(false);
+  const [totalDistance, setTotalDistance] = useState(0);
   const navigate = useNavigate();
   const { alert, showAlert } = useAlert();
 
@@ -60,6 +65,21 @@ export default function CreateRoute() {
     }
     fetchWaypoints();
   }, []);
+
+  useEffect(() => {
+    if (selectedWaypoints.length < 2) {
+      setTotalDistance(0);
+      return;
+    }
+    const routeCoordinates: Coordinates[] = selectedWaypoints.map(
+      (waypoint) => ({
+        latitude: waypoint.latitude,
+        longitude: waypoint.longitude,
+      })
+    );
+    const distance = calculateTotalRouteDistance(routeCoordinates);
+    setTotalDistance(distance);
+  }, [selectedWaypoints]);
 
   const handleNavigateBack = () => {
     navigate(-1);
@@ -220,9 +240,20 @@ export default function CreateRoute() {
         </div>
       )}
       {!isLoading && !error && waypoints.length > 0 && (
-        <ul className="divide-y divide-slate-200">
-          {waypoints.map((waypoint) => (
-            <li
+        <>
+          {selectedWaypoints.length >= 2 && (
+            <div className="p-4 bg-blue-50 border-b border-blue-200">
+              <p className="text-sm font-medium text-blue-700">
+                Selected Route Distance:{" "}
+                <span className="font-bold">
+                  {totalDistance.toFixed(2)} km
+                </span>
+              </p>
+            </div>
+          )}
+          <ul className="divide-y divide-slate-200">
+            {waypoints.map((waypoint) => (
+              <li
               key={waypoint.id}
               className="p-4 flex items-center gap-4 cursor-pointer hover:bg-slate-50"
               onClick={() => handleWaypointToggle(waypoint)}
@@ -264,7 +295,8 @@ export default function CreateRoute() {
             </li>
           ))}
         </ul>
-      )}
+        </> // Close the fragment here
+      )} {/* Close the conditional rendering here */}
 
       {/* Alert for general notifications */}
       {alert.isOpen && (
