@@ -8,6 +8,9 @@
 
 ## Features
 
+- 📍 Adding waypoints with GPS coordinates
+- 🗺️ Creating routes from waypoints
+- 📥 Importing and exporting data (e.g., GPX, KML)
 - 🚀 Server-side rendering
 - ⚡️ Hot Module Replacement (HMR)
 - 📦 Asset bundling and optimization
