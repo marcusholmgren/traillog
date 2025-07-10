@@ -1,5 +1,6 @@
 import React, {useEffect, useState, Suspense} from "react";
 import L from "leaflet";
+import "leaflet-compass";
 import {useSearchParams} from "react-router";
 import {
     MapContainer,
@@ -10,7 +11,6 @@ import {
     GeoJSON,
     LayersControl,
 } from "react-leaflet";
-import CompassIcon from "~/components/CompassIcon";
 import {
     getSavedWaypoints,
     waypointsToGeoJSON,
@@ -20,6 +20,15 @@ import type {Feature, Point, LineString} from "geojson";
 
 // Fix for default icon issue with webpack/vite
 if (typeof window !== "undefined") {
+    // TODO: This is a hacky way to extend the L.Control namespace.
+    // Consider using a more robust solution like @types/leaflet-compass if available.
+    if (!(L.Control as any).Compass) {
+        (L.Control as any).Compass = (L.Control as any).Compass || class Compass extends L.Control {
+            constructor(options?: any) {
+                super(options);
+            }
+        };
+    }
     delete (L.Icon.Default.prototype as any)._getIconUrl;
     L.Icon.Default.mergeOptions({
         iconRetinaUrl:
@@ -54,6 +63,15 @@ function MapController({
                 map.fitBounds(bounds, {padding: [50, 50]});
             }
         }
+
+        // Add compass control
+        const compassControl = new (L.Control as any).Compass({autoActive: true, showDigit: true});
+        map.addControl(compassControl);
+
+        // Clean up compass control on component unmount
+        return () => {
+            map.removeControl(compassControl);
+        };
     }, [map, routeGeoJSON]);
 
     return null; // This component does not render anything itself
@@ -284,7 +302,6 @@ export default function MapPage() {
                 <Suspense fallback={<p>Loading map...</p>}>
                     <ActualMap userPosition={position}/>
                 </Suspense>
-                <CompassIcon heading={heading}/>
             </div>
         );
     }
