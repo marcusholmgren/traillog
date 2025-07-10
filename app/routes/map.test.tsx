@@ -32,17 +32,6 @@ vi.mock("react-leaflet", () => ({
   useMap: () => ({}), // Mock useMap hook
 }));
 
-// Mock CompassIcon to isolate MapPage logic
-vi.mock("../components/CompassIcon", () => ({
-  __esModule: true,
-  default: ({ heading }: { heading: number | null }) => (
-    <div
-      data-testid="compass-icon"
-      data-heading={heading === null ? "null" : heading.toString()}
-    ></div>
-  ),
-}));
-
 // Mock db services
 vi.mock("../services/db", () => ({
   getSavedWaypoints: vi.fn().mockResolvedValue([]),
