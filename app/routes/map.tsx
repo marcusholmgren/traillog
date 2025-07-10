@@ -139,7 +139,7 @@ function ActualMap({userPosition}: { userPosition: UserPosition }) {
                     feature.properties.name || "Waypoint"
                 } image" style="max-width: 150px; max-height: 100px; object-fit: cover; margin-top: 5px; border-radius: 4px;" />`;
             }
-            popupContent += `<br /><a href="/waypoints/edit/${feature.properties.id}" style="margin-top: 5px; display: inline-block;">Edit Waypoint</a>`;
+            popupContent += `<br /><a href="${import.meta.env.BASE_URL}waypoints/edit/${feature.properties.id}" style="margin-top: 5px; display: inline-block;">Edit Waypoint</a>`;
             layer.bindPopup(popupContent);
         }
     };
