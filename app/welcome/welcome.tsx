@@ -1,5 +1,4 @@
-import logoDark from "./logo-dark.svg";
-import logoLight from "./logo-light.svg";
+import newImage from "./Gemini_Generated_Image_bkal7dbkal7dbkal.jpg";
 import { NavLink } from "react-router";
 
 export function Welcome() {
@@ -9,14 +8,9 @@ export function Welcome() {
         <header className="flex flex-col items-center gap-9">
           <div className="w-[500px] max-w-[100vw] p-4">
             <img
-              src={logoLight}
-              alt="React Router"
-              className="block w-full dark:hidden"
-            />
-            <img
-              src={logoDark}
-              alt="React Router"
-              className="hidden w-full dark:block"
+              src={newImage}
+              alt="Waypoints Landing Page Image"
+              className="block w-full"
             />
           </div>
         </header>
