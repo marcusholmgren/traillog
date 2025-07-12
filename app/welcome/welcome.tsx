@@ -1,5 +1,6 @@
-import newImage from "./Gemini_Generated_Image_bkal7dbkal7dbkal.jpg";
 import { NavLink } from "react-router";
+
+const BASE_URL = import.meta.env.BASE_URL;
 
 export function Welcome() {
   return (
@@ -8,9 +9,17 @@ export function Welcome() {
         <header className="flex flex-col items-center gap-9">
           <div className="w-[500px] max-w-[100vw] p-4">
             <img
-              src={newImage}
+              src={`${BASE_URL}Gemini_Generated_1200.jpg`} // Fallback for older browsers
+              srcSet={`
+                ${BASE_URL}Gemini_Generated_800.jpg 800w,
+                ${BASE_URL}Gemini_Generated_1200.jpg 1200w,
+                ${BASE_URL}Gemini_Generated_2048px.jpg 2048w
+              `}
+              sizes="(max-width: 600px) 800px,
+                      (max-width: 1200px) 1200px,
+                      1920px"
+              loading="lazy"
               alt="Waypoints Landing Page Image"
-              className="block w-full"
             />
           </div>
         </header>
