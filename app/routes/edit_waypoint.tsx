@@ -1,5 +1,5 @@
 import { type FormEvent, useEffect, useState, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router";
 import {
   getWaypointById,
   updateWaypoint,
@@ -257,8 +257,8 @@ export default function EditWaypoint() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col h-screen bg-slate-50">
-      <header className="flex items-center justify-between p-4 border-b border-slate-200 sticky top-0 bg-slate-50 z-10">
+    <form onSubmit={handleSubmit} className="flex flex-col h-screen">
+      <header className="flex items-center justify-between p-4 border-b border-slate-200">
         <Button onClick={handleCancel} className="p-2">
           <ArrowLeftIcon className="h-6 w-6" />
         </Button>
@@ -299,31 +299,33 @@ export default function EditWaypoint() {
           </Field>
         </div>
 
-        <Field>
-          <Label>Altitude (meters)</Label>
-          <Input
-            type="number"
-            value={altitude}
-            onChange={(e) => setAltitude(e.target.value)}
-            placeholder="Enter altitude"
-          />
-        </Field>
-
-        {/* Compass Direction */}
-        {bearing !== null && direction && (
-          <Field>
-            <Label>Compass Direction</Label>
-            <div className="flex items-center gap-4 p-4 rounded-lg bg-slate-100">
-              <Compass
-                className="h-10 w-10 text-slate-500"
-                style={{ transform: `rotate(${bearing - 45}deg)` }}
-              />
-              <div className="text-lg font-semibold">
-                {direction} ({Math.round(bearing)}°)
+        <div className="grid grid-cols-2 gap-4">
+          {/* Compass Direction */}
+          {bearing !== null && direction && (
+            <Field>
+              <Label>Compass Direction</Label>
+              <div className="flex items-center gap-4 p-4 rounded-lg">
+                <Compass
+                  className="h-10 w-10 text-slate-500"
+                  style={{ transform: `rotate(${bearing - 45}deg)` }}
+                />
+                <div className="text-lg font-semibold">
+                  {direction} ({Math.round(bearing)}°)
+                </div>
               </div>
-            </div>
+            </Field>
+          )}
+
+          <Field>
+            <Label>Altitude (meters)</Label>
+            <Input
+              type="number"
+              value={altitude}
+              onChange={(e) => setAltitude(e.target.value)}
+              placeholder="Enter altitude"
+            />
           </Field>
-        )}
+        </div>
 
         <Field>
           <Label>Notes</Label>
@@ -336,7 +338,7 @@ export default function EditWaypoint() {
 
         {/* Image Display and Capture Section */}
         <div className="space-y-2">
-          <Label>Photo</Label>
+          <h3>Photo</h3>
           {isCapturing && (
             <div className="fixed inset-0 bg-black bg-opacity-75 flex flex-col items-center justify-center z-50 p-4">
               <video
@@ -409,7 +411,7 @@ export default function EditWaypoint() {
         </div>
       </main>
 
-      <footer className="p-4 border-t border-slate-200 flex justify-end gap-4 sticky bottom-0 bg-slate-50">
+      <footer className="p-4 border-t border-slate-200 flex justify-end gap-4 sticky bottom-0">
         <Button
           type="button"
           variant="secondary"
