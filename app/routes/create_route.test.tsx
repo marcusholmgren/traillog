@@ -26,25 +26,25 @@ vi.mock("react-router", async () => {
 
 const mockWaypoints: Waypoint[] = [
   {
-    id: "1",
+    id: 1,
     name: "Waypoint 1",
     latitude: 34.0522,
     longitude: -118.2437,
-    createdAt: new Date().toISOString(),
+    createdAt: Date.now(),
   },
   {
-    id: "2",
+    id: 2,
     name: "Waypoint 2",
     latitude: 36.1699,
     longitude: -115.1398,
-    createdAt: new Date().toISOString(),
+    createdAt: Date.now(),
   },
   {
-    id: "3",
+    id: 3,
     name: "Waypoint 3",
     latitude: 40.7128,
     longitude: -74.006,
-    createdAt: new Date().toISOString(),
+    createdAt: Date.now(),
   },
 ];
 
@@ -255,9 +255,19 @@ describe("CreateRoute", () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
+    const expectedLineString: GeoJSON.LineString = {
+      type: "LineString",
+      coordinates: [
+        [mockWaypoints[2].longitude, mockWaypoints[2].latitude],
+        [mockWaypoints[1].longitude, mockWaypoints[1].latitude],
+      ],
+    };
 
     await waitFor(() => {
-      expect(db.addRoute).toHaveBeenCalledWith("My Test Route", ["1", "2"]);
+      expect(db.addRoute).toHaveBeenCalledWith(
+        "My Test Route",
+        expectedLineString
+      );
       expect(screen.getByText("Success!")).toBeInTheDocument();
     });
 
