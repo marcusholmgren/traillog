@@ -37,6 +37,14 @@ import {
 } from "@heroicons/react/24/outline";
 import { PageLayout } from "~/components/page-layout";
 
+function waypointsToLineString(waypoints: Waypoint[]): GeoJSON.LineString {
+  const coordinates = waypoints.map(wp => [wp.longitude, wp.latitude]);
+  return {
+    type: "LineString",
+    coordinates: coordinates,
+  };
+}
+
 export default function CreateRoute() {
   const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
   const [selectedWaypoints, setSelectedWaypoints] = useState<Waypoint[]>([]);
@@ -154,8 +162,8 @@ export default function CreateRoute() {
 
     setIsSaving(true);
     try {
-      const waypointIds = selectedWaypoints.map((wp) => wp.id);
-      await addRoute(name, waypointIds);
+      const routeGeometry = waypointsToLineString(selectedWaypoints);
+      await addRoute(name, routeGeometry);
       showAlert({
         title: "Success!",
         message: `Route '${name}' saved successfully!`,
