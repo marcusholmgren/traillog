@@ -125,7 +125,12 @@ export default function SavedWaypoints() {
         </p>
         {waypoint.altitude && (
           <p className="text-sm text-slate-500">
-            Altitude: {waypoint.altitude}m
+            Altitude:{" "}
+            {new Intl.NumberFormat("en-US", {
+              minimumFractionDigits: 1,
+              maximumFractionDigits: 1,
+            }).format(waypoint.altitude)}
+            m
           </p>
         )}
         <p className="text-xs text-slate-400 pt-1">
