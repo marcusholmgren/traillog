@@ -1,5 +1,9 @@
 import { useNavigate, NavLink } from "react-router";
-import { type Waypoint, waypointsToGeoJSON, getSavedWaypoints as dbGetSavedWaypoints } from "~/services/db";
+import {
+  type Waypoint,
+  waypointsToGeoJSON,
+  getSavedWaypoints as dbGetSavedWaypoints,
+} from "~/services/db";
 import { Button } from "~/components/button";
 import {
   ArrowDownOnSquareIcon,
@@ -12,6 +16,11 @@ import {
 import { useWaypoints } from "~/hooks/useWaypoints";
 import { EntityPageLayout } from "~/components/entity-page-layout";
 import { ResourceList } from "~/components/resource-list";
+import {
+  coordinateFormat,
+  dateFormatter,
+  numberFormat,
+} from "~/services/formatter";
 
 export default function SavedWaypoints() {
   const navigate = useNavigate();
@@ -120,21 +129,16 @@ export default function SavedWaypoints() {
           {waypoint.name || "Unnamed Waypoint"}
         </h2>
         <p className="text-sm text-slate-500">
-          Lat: {waypoint.latitude.toFixed(4)}, Lon:{" "}
-          {waypoint.longitude.toFixed(4)}
+          Lat: {coordinateFormat(waypoint.latitude)}, Lon:{" "}
+          {coordinateFormat(waypoint.longitude)}
         </p>
         {waypoint.altitude && (
           <p className="text-sm text-slate-500">
-            Altitude:{" "}
-            {new Intl.NumberFormat("en-US", {
-              minimumFractionDigits: 1,
-              maximumFractionDigits: 1,
-            }).format(waypoint.altitude)}
-            m
+            Altitude: {numberFormat(waypoint.altitude)}
           </p>
         )}
         <p className="text-xs text-slate-400 pt-1">
-          {new Date(waypoint.createdAt).toLocaleString()}
+          {dateFormatter(waypoint.createdAt)}
         </p>
       </div>
       <div className="flex flex-col sm:flex-row gap-2">
@@ -201,14 +205,3 @@ export default function SavedWaypoints() {
     </EntityPageLayout>
   );
 }
-
-// The dateFormatter function seems unused in the original component after refactor,
-// but if it were needed, it should be kept or moved to a utility file.
-// const dateFormatter = (number: number | Date) => {
-//   const userLocales = navigator.languages || [navigator.language];
-//   const seLong = new Intl.DateTimeFormat(userLocales, {
-//     dateStyle: "full",
-//     timeStyle: "short",
-//   });
-//   return seLong.format(number);
-// };
