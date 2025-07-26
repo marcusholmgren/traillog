@@ -3,12 +3,16 @@
  * Uses US English locale for consistent decimal formatting.
  *
  * @param input - The coordinate value to format.
+ * @param maximumFractionDigits - Maximum fraction digits
  * @returns The formatted coordinate string.
  */
-export function coordinateFormat(input: number) {
+export function coordinateFormat(
+  input: number,
+  maximumFractionDigits: number = 4
+) {
   return new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 3,
-    maximumFractionDigits: 4,
+    maximumFractionDigits: maximumFractionDigits,
   }).format(input);
 }
 
@@ -17,15 +21,21 @@ export function coordinateFormat(input: number) {
  * Displays with one decimal place and uses the "narrow" unit display.
  *
  * @param input - The numeric value to format.
+ * @param unit - The unit to display the value in
+ * @param maximumFractionDigits - Maximum fraction digits
  * @returns The formatted distance string with unit.
  */
-export function numberFormat(input: number | bigint) {
+export function numberFormat(
+  input: number | bigint,
+  unit: string = "meter",
+  maximumFractionDigits: number = 1
+) {
   const userLocales = navigator.languages || [navigator.language];
   return new Intl.NumberFormat(userLocales, {
     minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
+    maximumFractionDigits: maximumFractionDigits,
     style: "unit",
-    unit: "meter",
+    unit: unit,
     unitDisplay: "narrow",
   }).format(input);
 }

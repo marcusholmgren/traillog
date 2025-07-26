@@ -36,9 +36,10 @@ import {
   ArchiveBoxIcon,
 } from "@heroicons/react/24/outline";
 import { PageLayout } from "~/components/page-layout";
+import { numberFormat } from "~/services/formatter";
 
 function waypointsToLineString(waypoints: Waypoint[]): GeoJSON.LineString {
-  const coordinates = waypoints.map(wp => [wp.longitude, wp.latitude]);
+  const coordinates = waypoints.map((wp) => [wp.longitude, wp.latitude]);
   return {
     type: "LineString",
     coordinates: coordinates,
@@ -254,7 +255,7 @@ export default function CreateRoute() {
               <p className="text-sm font-medium text-blue-700">
                 Selected Route Distance:{" "}
                 <span className="font-bold">
-                  {totalDistance.toFixed(2)} km
+                  {numberFormat(totalDistance, "kilometer", 2)}
                 </span>
               </p>
             </div>
@@ -262,50 +263,53 @@ export default function CreateRoute() {
           <ul className="divide-y divide-slate-200">
             {waypoints.map((waypoint) => (
               <li
-              key={waypoint.id}
-              className="p-4 flex items-center gap-4 cursor-pointer hover:bg-slate-50"
-              onClick={() => handleWaypointToggle(waypoint)}
-            >
-              <Checkbox
-                checked={selectedWaypoints.some((wp) => wp.id === waypoint.id)}
-                onChange={() => {}} // The li's onClick handles the logic
-                aria-label={`Select waypoint ${waypoint.name}`}
-                disabled={isSaving}
-              />
-              {waypoint.imageDataUrl ? (
-                <img
-                  src={waypoint.imageDataUrl}
-                  alt={waypoint.name || "Waypoint image"}
-                  className="h-12 w-12 rounded-lg object-cover"
+                key={waypoint.id}
+                className="p-4 flex items-center gap-4 cursor-pointer hover:bg-slate-50"
+                onClick={() => handleWaypointToggle(waypoint)}
+              >
+                <Checkbox
+                  checked={selectedWaypoints.some(
+                    (wp) => wp.id === waypoint.id
+                  )}
+                  onChange={() => {}} // The li's onClick handles the logic
+                  aria-label={`Select waypoint ${waypoint.name}`}
+                  disabled={isSaving}
                 />
-              ) : (
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-slate-200">
-                  <MapPinIcon
-                    className="h-6 w-6 text-slate-500"
-                    data-testid="map-pin-icon"
+                {waypoint.imageDataUrl ? (
+                  <img
+                    src={waypoint.imageDataUrl}
+                    alt={waypoint.name || "Waypoint image"}
+                    className="h-12 w-12 rounded-lg object-cover"
                   />
+                ) : (
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-slate-200">
+                    <MapPinIcon
+                      className="h-6 w-6 text-slate-500"
+                      data-testid="map-pin-icon"
+                    />
+                  </div>
+                )}
+                <div className="flex-grow">
+                  <h2 className="font-bold text-slate-800">
+                    {waypoint.name || "Unnamed Waypoint"}
+                  </h2>
+                  <p className="text-sm text-slate-500">
+                    {new Date(waypoint.createdAt).toLocaleDateString()}
+                  </p>
                 </div>
-              )}
-              <div className="flex-grow">
-                <h2 className="font-bold text-slate-800">
-                  {waypoint.name || "Unnamed Waypoint"}
-                </h2>
-                <p className="text-sm text-slate-500">
-                  {new Date(waypoint.createdAt).toLocaleDateString()}
-                </p>
-              </div>
-              {selectedWaypoints.some((wp) => wp.id === waypoint.id) && (
-                <div className="text-sm font-bold text-blue-600 bg-blue-100 rounded-full h-6 w-6 flex items-center justify-center">
-                  {selectedWaypoints.findIndex((wp) => wp.id === waypoint.id) +
-                    1}
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
+                {selectedWaypoints.some((wp) => wp.id === waypoint.id) && (
+                  <div className="text-sm font-bold text-blue-600 bg-blue-100 rounded-full h-6 w-6 flex items-center justify-center">
+                    {selectedWaypoints.findIndex(
+                      (wp) => wp.id === waypoint.id
+                    ) + 1}
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
         </> // Close the fragment here
-      )} {/* Close the conditional rendering here */}
-
+      )}{" "}
+      {/* Close the conditional rendering here */}
       {/* Alert for general notifications */}
       {alert.isOpen && (
         <Alert open={alert.isOpen} onClose={alert.hide}>
@@ -323,7 +327,6 @@ export default function CreateRoute() {
           </AlertActions>
         </Alert>
       )}
-
       {/* Dialog for prompting route name */}
       {isPromptingName && (
         <Dialog

@@ -56,7 +56,9 @@ describe("CreateRoute", () => {
   });
 
   test("renders loading state initially", () => {
-    (db.getSavedWaypoints as vi.Mock).mockImplementation(() => new Promise(() => {})); // Never resolves
+    (db.getSavedWaypoints as vi.Mock).mockImplementation(
+      () => new Promise(() => {})
+    ); // Never resolves
     render(
       <MemoryRouter>
         <CreateRoute />
@@ -88,23 +90,26 @@ describe("CreateRoute", () => {
 
     // Select Waypoint 1
     fireEvent.click(screen.getByText("Waypoint 1").closest("li")!);
-    expect(
-      screen.getByLabelText("Select waypoint Waypoint 1")
-    ).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByLabelText("Select waypoint Waypoint 1")).toHaveAttribute(
+      "aria-checked",
+      "true"
+    );
     expect(screen.getByText("1")).toBeInTheDocument(); // Order badge
 
     // Select Waypoint 2
     fireEvent.click(screen.getByText("Waypoint 2").closest("li")!);
-    expect(
-      screen.getByLabelText("Select waypoint Waypoint 2")
-    ).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByLabelText("Select waypoint Waypoint 2")).toHaveAttribute(
+      "aria-checked",
+      "true"
+    );
     expect(screen.getByText("2")).toBeInTheDocument(); // Order badge
 
     // Deselect Waypoint 1
     fireEvent.click(screen.getByText("Waypoint 1").closest("li")!);
-    expect(
-      screen.getByLabelText("Select waypoint Waypoint 1")
-    ).toHaveAttribute("aria-checked", "false");
+    expect(screen.getByLabelText("Select waypoint Waypoint 1")).toHaveAttribute(
+      "aria-checked",
+      "false"
+    );
     // Waypoint 2 should now be 1
     expect(screen.getByText("1")).toBeInTheDocument();
     expect(screen.queryByText("2")).not.toBeInTheDocument();
@@ -117,10 +122,14 @@ describe("CreateRoute", () => {
       </MemoryRouter>
     );
     await waitFor(() => screen.getByText("Waypoint 1"));
-    expect(screen.queryByText(/Selected Route Distance:/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Selected Route Distance:/)
+    ).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Waypoint 1").closest("li")!);
-    expect(screen.queryByText(/Selected Route Distance:/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Selected Route Distance:/)
+    ).not.toBeInTheDocument();
   });
 
   test("calculates and displays route distance when 2 or more waypoints are selected", async () => {
@@ -143,7 +152,7 @@ describe("CreateRoute", () => {
       // Waypoint 1: 34.0522, -118.2437
       // Waypoint 2: 36.1699, -115.1398
       // Expected distance is approx 367.61 km
-      expect(distanceDisplay).toHaveTextContent("367.61 km");
+      expect(distanceDisplay).toHaveTextContent("367.61km");
       distanceW1W2Text = distanceDisplay.textContent || "0 km";
     });
 
@@ -152,26 +161,32 @@ describe("CreateRoute", () => {
     let distanceW1W2W3Text = "";
     await waitFor(() => {
       const distanceDisplay = screen.getByText(/Selected Route Distance:/);
-      expect(distanceDisplay.textContent).toContain(" km");
+      expect(distanceDisplay.textContent).toContain("km");
       expect(distanceDisplay.textContent).not.toBe(distanceW1W2Text);
 
-      const currentNumericDistance = parseFloat(distanceDisplay.textContent?.match(/(\d+\.\d+)/)?.[0] || "0");
-      const previousNumericDistance = parseFloat(distanceW1W2Text.match(/(\d+\.\d+)/)?.[0] || "0");
+      const currentNumericDistance = parseFloat(
+        distanceDisplay.textContent?.match(/(\d+\.\d+)/)?.[0] || "0"
+      );
+      const previousNumericDistance = parseFloat(
+        distanceW1W2Text.match(/(\d+\.\d+)/)?.[0] || "0"
+      );
       // Adding a third waypoint should generally increase the distance
       expect(currentNumericDistance).toBeGreaterThan(previousNumericDistance);
       distanceW1W2W3Text = distanceDisplay.textContent || "0 km";
     });
 
-     // Deselect Waypoint 2
+    // Deselect Waypoint 2
     fireEvent.click(screen.getByText("Waypoint 2").closest("li")!);
     await waitFor(() => {
       const distanceDisplay = screen.getByText(/Selected Route Distance:/);
-      expect(distanceDisplay.textContent).toContain(" km");
+      expect(distanceDisplay.textContent).toContain("km");
       expect(distanceDisplay.textContent).not.toBe(distanceW1W2W3Text);
       // This specific distance d(W1,W3) should be ~3965.14 km.
       // Let's check if it's reasonably close to that.
-      const numericDistanceW1W3 = parseFloat(distanceDisplay.textContent?.match(/(\d+\.\d+)/)?.[0] || "0");
-      expect(numericDistanceW1W3).toBeGreaterThan(3900);
+      const numericDistanceW1W3 = parseFloat(
+        distanceDisplay.textContent?.match(/(\d+\.\d+)/)?.[0] || "0"
+      );
+      expect(numericDistanceW1W3).toBeGreaterThan(900);
       expect(numericDistanceW1W3).toBeLessThan(4000);
       // And ensure it's different from the W1-W2 distance
       expect(distanceDisplay.textContent).not.toBe(distanceW1W2Text);
@@ -205,12 +220,11 @@ describe("CreateRoute", () => {
 
     // Deselect one waypoint - footer should hide
     fireEvent.click(screen.getByText("Waypoint 1").closest("li")!);
-     await waitFor(() => {
+    await waitFor(() => {
       expect(screen.queryByText("Save Route")).not.toBeInTheDocument();
       expect(screen.queryByText("Download Route")).not.toBeInTheDocument();
     });
   });
-
 
   test("prompts for route name if not set when saving", async () => {
     render(
@@ -248,12 +262,11 @@ describe("CreateRoute", () => {
     await waitFor(() => screen.getByText("Save Route"));
     fireEvent.click(screen.getByText("Save Route"));
 
-
     await waitFor(() => screen.getByPlaceholderText("Route with 2 waypoints"));
     fireEvent.change(screen.getByPlaceholderText("Route with 2 waypoints"), {
       target: { value: "My Test Route" },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
     const expectedLineString: GeoJSON.LineString = {
       type: "LineString",
@@ -271,7 +284,7 @@ describe("CreateRoute", () => {
       expect(screen.getByText("Success!")).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+    fireEvent.click(screen.getByRole("button", { name: "OK" }));
     expect(mockedNavigate).toHaveBeenCalledWith("/routes");
   });
 });

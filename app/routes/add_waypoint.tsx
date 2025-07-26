@@ -11,6 +11,7 @@ import {
   PhotoIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
+import { coordinateFormat } from "~/services/formatter";
 
 export default function AddWaypoint() {
   const [latitude, setLatitude] = useState<number | null>(null);
@@ -205,7 +206,10 @@ export default function AddWaypoint() {
             type="text"
             value={
               latitude !== null && longitude !== null
-                ? `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
+                ? `${coordinateFormat(latitude, 6)}, ${coordinateFormat(
+                    longitude,
+                    6
+                  )}`
                 : "Loading..."
             }
             readOnly

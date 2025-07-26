@@ -53,8 +53,8 @@ export default function SavedWaypoints() {
   const handleShareWaypoint = async (waypoint: Waypoint) => {
     const shareText = `Waypoint: ${
       waypoint.name || "Unnamed"
-    } - Lat: ${waypoint.latitude.toFixed(4)}, Lon: ${waypoint.longitude.toFixed(
-      4
+    } - Lat: ${coordinateFormat(waypoint.latitude)}, Lon: ${coordinateFormat(
+      waypoint.longitude
     )}`;
     const shareTitle = `Share Waypoint: ${waypoint.name || "Unnamed"}`;
 
