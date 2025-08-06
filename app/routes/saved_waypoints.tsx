@@ -1,8 +1,11 @@
-import { useNavigate, NavLink } from "react-router";
+import { useNavigate, NavLink, Form, useNavigation } from "react-router";
+import type { Route } from "./+types/saved_waypoints";
 import {
   type Waypoint,
   waypointsToGeoJSON,
   getSavedWaypoints as dbGetSavedWaypoints,
+  getSavedWaypoints,
+  deleteWaypoint,
 } from "~/services/db";
 import { Button } from "~/components/button";
 import {
@@ -13,7 +16,6 @@ import {
   MapPinIcon,
   MapIcon,
 } from "@heroicons/react/24/outline";
-import { useWaypoints } from "~/hooks/useWaypoints";
 import { EntityPageLayout } from "~/components/entity-page-layout";
 import { ResourceList } from "~/components/resource-list";
 import {
@@ -22,32 +24,42 @@ import {
   numberFormat,
 } from "~/services/formatter";
 
-export default function SavedWaypoints() {
-  const navigate = useNavigate();
-  const {
-    waypoints,
-    isLoading,
-    error: waypointsError, // Renamed to avoid conflict if EntityPageLayout introduces its own error prop
-    deleteWaypoint,
-  } = useWaypoints();
+export async function clientLoader({ params }: Route.ClientLoaderArgs) {
+  const savedWaypoints = await getSavedWaypoints();
+  return { waypoints: savedWaypoints, error: null };
+}
 
-  // Error from hook needs to be available for ResourceList and potentially other UI elements
-  const error = waypointsError;
+export async function clientAction({ request }: Route.ClientActionArgs) {
+  const formData = await request.formData();
+  const id = Number(formData.get("waypoint_id"));
+  try {
+    await deleteWaypoint(id);
+    const savedWaypoints = await getSavedWaypoints();
+    return { waypoints: savedWaypoints, error: null };
+  } catch (err) {
+    console.error("Error deleting waypoint:", err);
+    const savedWaypoints = await getSavedWaypoints();
+    return {
+      error: "Failed to delete waypoint. Please try again.",
+      waypoints: savedWaypoints,
+    };
+  }
+}
+
+export default function SavedWaypoints({
+  actionData,
+  loaderData,
+}: Route.ComponentProps) {
+  const navigate = useNavigate();
+  const navigation = useNavigation();
+  const isLoading = navigation.state === "loading";
+
+  const data = actionData || loaderData;
+  const savedWaypoints = data.waypoints;
+  const error = data.error;
 
   const handleAddWaypoint = () => {
     navigate("/waypoints/add");
-  };
-
-  const handleDeleteWaypoint = async (id: number) => {
-    try {
-      await deleteWaypoint(id);
-      // UI is updated via hook state
-      console.log(`Waypoint ${id} deleted successfully.`);
-    } catch (err) {
-      console.error("Error deleting waypoint from UI:", err);
-      // Error is already set in the hook, but you could show a specific notification here if needed
-      alert("Failed to delete waypoint. Please try again.");
-    }
   };
 
   const handleShareWaypoint = async (waypoint: Waypoint) => {
@@ -147,14 +159,24 @@ export default function SavedWaypoints() {
             <PencilIcon className="h-5 w-5" />
           </Button>
         </NavLink>
-        <Button
-          outline
-          onClick={() => handleDeleteWaypoint(waypoint.id)}
-          className="p-2"
-          aria-label="Delete waypoint"
-        >
-          <TrashIcon className="h-5 w-5" />
-        </Button>
+        <Form method="post">
+          <input
+            type="text"
+            name="waypoint_id"
+            value={waypoint.id}
+            hidden
+            readOnly
+          />
+          <Button
+            outline
+            type="submit"
+            // onClick={() => handleDeleteWaypoint(waypoint.id)}
+            className="p-2"
+            aria-label="Delete waypoint"
+          >
+            <TrashIcon className="h-5 w-5" />
+          </Button>
+        </Form>
         <Button
           outline
           onClick={() => handleShareWaypoint(waypoint)}
@@ -195,7 +217,7 @@ export default function SavedWaypoints() {
       footerContent={pageFooter}
     >
       <ResourceList
-        items={waypoints}
+        items={savedWaypoints || []}
         renderItem={renderWaypointItem}
         isLoading={isLoading}
         error={error}
