@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter } from "react-router";
 import CreateRoute from "./create_route";
 import * as db from "~/services/db";
 import type { Waypoint } from "~/services/db"; // Ensure Waypoint type is imported
