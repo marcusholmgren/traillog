@@ -14,14 +14,10 @@ import { Button } from "~/components/button";
 import { Input } from "~/components/input";
 import { Textarea } from "~/components/textarea";
 import { Field, Label } from "~/components/fieldset";
-import {
-  ArrowLeftIcon,
-  CameraIcon,
-  PhotoIcon,
-  XMarkIcon,
-  MapPinIcon,
-} from "@heroicons/react/24/outline";
+import { ArrowLeftIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { Compass } from "lucide-react";
+import { useImageCapture } from "~/hooks/useImageCapture";
+import { ImageCapture } from "~/components/ImageCapture";
 
 export default function EditWaypoint() {
   const { wpId } = useParams();
@@ -35,11 +31,20 @@ export default function EditWaypoint() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const [imageError, setImageError] = useState<string | null>(null);
-  const [isCapturing, setIsCapturing] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
+
+  const {
+    capturedImage,
+    setCapturedImage,
+    imageError,
+    isCapturing,
+    videoRef,
+    streamRef,
+    handleCaptureImageClick,
+    handleTakePhotoFromStream,
+    handleCancelCamera,
+    handleChooseFileClick,
+    handleRemoveImageClick,
+  } = useImageCapture();
 
   // Compass direction state
   const [direction, setDirection] = useState<ShorthandDirection | null>(null);
@@ -102,7 +107,7 @@ export default function EditWaypoint() {
     };
 
     fetchWaypoint();
-  }, [wpId]);
+  }, [wpId, setCapturedImage]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -132,7 +137,7 @@ export default function EditWaypoint() {
           streamRef.current.getTracks().forEach((track) => track.stop());
           streamRef.current = null;
         }
-        setIsCapturing(false);
+        handleCancelCamera();
         navigate(-1, { viewTransition: true });
       }, 1500);
     } catch (err) {
@@ -147,109 +152,8 @@ export default function EditWaypoint() {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
-    setIsCapturing(false);
+    handleCancelCamera();
     navigate(-1, { viewTransition: true }); // Go back to the previous page
-  };
-
-  // Image capture logic (similar to AddWaypoint)
-  const handleCaptureImageClick = async () => {
-    setImageError(null);
-    // Don't clear capturedImage here, user might want to keep existing if camera fails
-
-    if (
-      "MediaStream" in window &&
-      "ImageCapture" in window &&
-      navigator.mediaDevices &&
-      navigator.mediaDevices.getUserMedia
-    ) {
-      try {
-        setIsCapturing(true);
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment" },
-        });
-        streamRef.current = stream;
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
-        return;
-      } catch (err: any) {
-        console.error("Error using ImageCapture API:", err);
-        setImageError(
-          `Camera access denied or not available: ${err.message}. You can try choosing a file instead.`
-        );
-        setIsCapturing(false);
-      }
-    } else {
-      handleChooseFileClick();
-      setImageError("Live camera not supported. Please choose a file.");
-    }
-  };
-
-  const handleTakePhotoFromStream = async () => {
-    if (streamRef.current) {
-      try {
-        const imageCapture = new ImageCapture(
-          streamRef.current.getVideoTracks()[0]
-        );
-        const blob = await imageCapture.takePhoto();
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setCapturedImage(reader.result as string);
-          setImageError(null);
-          setSuccessMessage("Image captured! Save to apply changes.");
-        };
-        reader.onerror = () => {
-          setImageError("Failed to process captured image.");
-        };
-        reader.readAsDataURL(blob);
-      } catch (err: any) {
-        setImageError(`Could not take photo: ${err.message}`);
-      } finally {
-        if (streamRef.current) {
-          streamRef.current.getTracks().forEach((track) => track.stop());
-          streamRef.current = null;
-        }
-        setIsCapturing(false);
-      }
-    }
-  };
-
-  const handleCancelCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
-    }
-    setIsCapturing(false);
-    setImageError(null);
-  };
-
-  const handleChooseFileClick = () => {
-    setImageError(null);
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*";
-    input.onchange = (event) => {
-      const target = event.target as HTMLInputElement;
-      if (target.files && target.files.length > 0) {
-        const file = target.files[0];
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setCapturedImage(reader.result as string);
-          setSuccessMessage("Image selected. Save to apply changes.");
-        };
-        reader.onerror = () => {
-          setImageError("Failed to read image file.");
-        };
-        reader.readAsDataURL(file);
-      }
-    };
-    input.click();
-  };
-
-  const handleRemoveImageClick = () => {
-    setCapturedImage(null);
-    setImageError(null);
-    setSuccessMessage("Image marked for removal. Save to apply changes.");
   };
 
   if (isLoading) {
@@ -336,79 +240,17 @@ export default function EditWaypoint() {
           />
         </Field>
 
-        {/* Image Display and Capture Section */}
-        <div className="space-y-2">
-          <h3>Photo</h3>
-          {isCapturing && (
-            <div className="fixed inset-0 bg-black bg-opacity-75 flex flex-col items-center justify-center z-50 p-4">
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                className="w-full max-w-md aspect-[4/3] rounded-lg"
-              />
-              <div className="flex gap-4 mt-4">
-                <Button type="button" onClick={handleTakePhotoFromStream}>
-                  Take Photo
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleCancelCamera}
-                  variant="secondary"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          )}
-          <div className="w-full aspect-[3/2] rounded-lg bg-slate-200 flex items-center justify-center mb-2">
-            {capturedImage ? (
-              <img
-                src={capturedImage}
-                alt="Waypoint"
-                className="w-full h-full object-cover rounded-lg"
-              />
-            ) : (
-              <div className="text-slate-500 flex flex-col items-center">
-                <MapPinIcon className="h-12 w-12" />
-                <span>No image provided.</span>
-              </div>
-            )}
-          </div>
-          {imageError && (
-            <p className="text-red-500 text-sm pb-2">{imageError}</p>
-          )}
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              onClick={handleCaptureImageClick}
-              className="flex-grow min-w-[calc(50%-0.25rem)]"
-            >
-              <CameraIcon className="h-5 w-5 mr-2" />
-              Open Camera
-            </Button>
-            <Button
-              type="button"
-              onClick={handleChooseFileClick}
-              variant="secondary"
-              className="flex-grow min-w-[calc(50%-0.25rem)]"
-            >
-              <PhotoIcon className="h-5 w-5 mr-2" />
-              Choose from File
-            </Button>
-            {capturedImage && (
-              <Button
-                type="button"
-                onClick={handleRemoveImageClick}
-                variant="destructive"
-                className="w-full mt-2"
-              >
-                <XMarkIcon className="h-5 w-5 mr-2" />
-                Remove Image
-              </Button>
-            )}
-          </div>
-        </div>
+        <ImageCapture
+          capturedImage={capturedImage}
+          imageError={imageError}
+          isCapturing={isCapturing}
+          videoRef={videoRef}
+          handleCaptureImageClick={handleCaptureImageClick}
+          handleChooseFileClick={handleChooseFileClick}
+          handleRemoveImageClick={handleRemoveImageClick}
+          handleTakePhotoFromStream={handleTakePhotoFromStream}
+          handleCancelCamera={handleCancelCamera}
+        />
       </main>
 
       <footer className="p-4 border-t border-slate-200 flex justify-end gap-4 sticky bottom-0">

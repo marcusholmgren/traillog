@@ -1,25 +1,18 @@
-import { useState, useRef } from "react";
-import {
-  useNavigate,
-  Form,
-  useNavigation,
-  redirect,
-  useLoaderData,
-} from "react-router";
+import { useEffect } from "react";
+import type { Route } from "./+types/add_waypoint";
+import { useNavigate, Form, redirect, useNavigation } from "react-router";
 import { addWaypoint } from "~/services/db";
 import { Button } from "~/components/button";
 import { Input } from "~/components/input";
 import { Textarea } from "~/components/textarea";
 import { Field, Label } from "~/components/fieldset";
-import {
-  ArrowLeftIcon,
-  CameraIcon,
-  PhotoIcon,
-} from "@heroicons/react/24/outline";
+import { ArrowLeftIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { coordinateFormat } from "~/services/formatter";
+import { useImageCapture } from "~/hooks/useImageCapture";
+import { ImageCapture } from "~/components/ImageCapture";
 import { getCurrentPosition } from "~/services/geolocation";
 
-export const clientLoader = async ({}: any) => {
+export const clientLoader = async ({}: Route.ClientLoaderArgs) => {
   try {
     const position = await getCurrentPosition({
       enableHighAccuracy: true,
@@ -44,7 +37,7 @@ export const clientLoader = async ({}: any) => {
   }
 };
 
-export const clientAction = async ({ request }: any) => {
+export const clientAction = async ({ request }: Route.ClientActionArgs) => {
   const formData = await request.formData();
   const name = formData.get("name") as string;
   const latitude = parseFloat(formData.get("latitude") as string);
@@ -78,127 +71,35 @@ export const clientAction = async ({ request }: any) => {
   }
 };
 
-export default function AddWaypoint({ loaderData }: any) {
+export default function AddWaypoint({
+  actionData,
+  loaderData,
+}: Route.ComponentProps) {
   const navigate = useNavigate();
   const navigation = useNavigation();
   const { latitude, longitude, altitude, error } = loaderData;
-
-  const [name, setName] = useState("");
-  const [notes, setNotes] = useState("");
-
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const [imageError, setImageError] = useState<string | null>(null);
-  const [isCapturing, setIsCapturing] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
   const isSubmitting = navigation.state === "submitting";
 
+  const {
+    capturedImage,
+    imageError,
+    isCapturing,
+    videoRef,
+    streamRef,
+    handleCaptureImageClick,
+    handleTakePhotoFromStream,
+    handleCancelCamera,
+    handleChooseFileClick,
+    handleRemoveImageClick,
+  } = useImageCapture();
+
+  useEffect(() => {
+    handleCancelCamera(); // Ensure camera UI is hidden
+  });
+
   const handleCancel = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
-    }
-    setIsCapturing(false);
+    handleCancelCamera(); // Ensure camera UI is hidden
     navigate(-1);
-  };
-
-  const handleCaptureImageClick = async () => {
-    setImageError(null);
-    if (
-      "MediaStream" in window &&
-      "ImageCapture" in window &&
-      navigator.mediaDevices &&
-      navigator.mediaDevices.getUserMedia
-    ) {
-      try {
-        setIsCapturing(true);
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment" },
-        });
-        streamRef.current = stream;
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
-      } catch (err: any) {
-        console.error("Error using ImageCapture API:", err);
-        setImageError(
-          `Camera access denied or not available: ${err.message}. You can try choosing a file instead.`,
-        );
-        setIsCapturing(false);
-      }
-    } else {
-      handleChooseFileClick();
-      setImageError("Live camera not supported. Please choose a file.");
-    }
-  };
-
-  const handleTakePhotoFromStream = async () => {
-    if (streamRef.current) {
-      try {
-        const imageCapture = new ImageCapture(
-          streamRef.current.getVideoTracks()[0],
-        );
-        const blob = await imageCapture.takePhoto();
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setCapturedImage(reader.result as string);
-          setImageError(null);
-          setSuccessMessage("Image captured! Save to apply changes.");
-        };
-        reader.onerror = () => {
-          setImageError("Failed to process captured image.");
-        };
-        reader.readAsDataURL(blob);
-      } catch (err: any) {
-        setImageError(`Could not take photo: ${err.message}`);
-      } finally {
-        if (streamRef.current) {
-          streamRef.current.getTracks().forEach((track) => track.stop());
-          streamRef.current = null;
-        }
-        setIsCapturing(false);
-      }
-    }
-  };
-
-  const handleCancelCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
-    }
-    setIsCapturing(false);
-    setImageError(null);
-  };
-
-  const handleChooseFileClick = () => {
-    setImageError(null);
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*";
-    input.onchange = (event) => {
-      const target = event.target as HTMLInputElement;
-      if (target.files && target.files.length > 0) {
-        const file = target.files[0];
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setCapturedImage(reader.result as string);
-          setSuccessMessage("Image selected. Save to apply changes.");
-        };
-        reader.onerror = () => {
-          setImageError("Failed to read image file.");
-        };
-        reader.readAsDataURL(file);
-      }
-    };
-    input.click();
-  };
-
-  const handleRemoveImageClick = () => {
-    setCapturedImage(null);
-    setImageError(null);
-    setSuccessMessage("Image marked for removal. Save to apply changes.");
   };
 
   return (
@@ -214,13 +115,7 @@ export default function AddWaypoint({ loaderData }: any) {
       <main className="flex-grow overflow-y-auto p-4 space-y-4">
         <Field>
           <Label>Name</Label>
-          <Input
-            type="text"
-            name="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
+          <Input type="text" name="name" required />
         </Field>
         <Field>
           <Label>Coordinates</Label>
@@ -242,95 +137,24 @@ export default function AddWaypoint({ loaderData }: any) {
         </Field>
         <Field>
           <Label>Altitude (meters)</Label>
-          <Input
-            type="number"
-            name="altitude"
-            defaultValue={altitude ?? ""}
-            // onChange={(e) => setAltitude(parseFloat(e.target.value))}
-          />
+          <Input type="number" name="altitude" defaultValue={altitude ?? ""} />
         </Field>
         <Field>
           <Label>Notes</Label>
-          <Textarea
-            name="notes"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={4}
-          />
+          <Textarea name="notes" rows={4} />
         </Field>
-        <input type="hidden" name="imageDataUrl" value={capturedImage ?? ""} />
-        <div className="space-y-2">
-          <p>Photo</p>
-          {isCapturing && (
-            <div className="fixed inset-0 bg-black bg-opacity-75 flex flex-col items-center justify-center z-50 p-4">
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                className="w-full max-w-md aspect-[4/3] rounded-lg"
-              ></video>
-              <div className="flex gap-4 mt-4">
-                <Button type="button" onClick={handleTakePhotoFromStream}>
-                  Take Photo
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleCancelCamera}
-                  variant="secondary"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          )}
-          <div className="w-full aspect-[3/2] rounded-lg bg-slate-200 flex items-center justify-center mb-2">
-            {capturedImage ? (
-              <img
-                src={capturedImage}
-                alt="Waypoint"
-                className="w-full h-full object-cover rounded-lg"
-              />
-            ) : (
-              <p className="text-slate-500">No image provided.</p>
-            )}
-          </div>
-          {imageError && (
-            <p className="text-red-500 text-sm pb-2">{imageError}</p>
-          )}
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              onClick={handleCaptureImageClick}
-              className="flex-grow min-w-[calc(50%-0.25rem)]"
-            >
-              <CameraIcon className="h-5 w-5 mr-2" />
-              Open Camera
-            </Button>
-            <Button
-              type="button"
-              onClick={handleChooseFileClick}
-              variant="secondary"
-              className="flex-grow min-w-[calc(50%-0.25rem)]"
-            >
-              <PhotoIcon className="h-5 w-5 mr-2" />
-              Choose from File
-            </Button>
-            {capturedImage && (
-              <Button
-                type="button"
-                onClick={handleRemoveImageClick}
-                variant="destructive"
-                className="w-full mt-2"
-              >
-                Remove Image
-              </Button>
-            )}
-          </div>
-        </div>
-        {error && <p className="text-red-500">{error}</p>}
-        {successMessage && !error && (
-          <p className="text-green-500">{successMessage}</p>
-        )}{" "}
+        <ImageCapture
+          capturedImage={capturedImage}
+          imageError={imageError}
+          isCapturing={isCapturing}
+          videoRef={videoRef}
+          handleCaptureImageClick={handleCaptureImageClick}
+          handleChooseFileClick={handleChooseFileClick}
+          handleRemoveImageClick={handleRemoveImageClick}
+          handleTakePhotoFromStream={handleTakePhotoFromStream}
+          handleCancelCamera={handleCancelCamera}
+        />
+        <input hidden name="imageDataUrl" value={capturedImage ?? undefined} />
       </main>
 
       <footer className="p-4 border-t border-slate-200 flex justify-end gap-4">
