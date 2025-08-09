@@ -23,7 +23,7 @@ export enum ShorthandDirection {
  */
 export function calculateDistance(
   point1: Coordinates,
-  point2: Coordinates
+  point2: Coordinates,
 ): number {
   const R = 6371; // Earth's radius in kilometers
 
@@ -88,7 +88,7 @@ export function calculateTotalRouteDistance(route: Coordinates[]): number {
  */
 export function calculateCompassDirection(
   point1: Coordinates,
-  point2: Coordinates
+  point2: Coordinates,
 ): number {
   const lat1Rad = toRadians(point1.latitude);
   const lon1Rad = toRadians(point1.longitude);
@@ -146,4 +146,20 @@ export function translateToShorthand(bearing: number): ShorthandDirection {
     // bearing >= 292.5 && bearing < 337.5
     return ShorthandDirection.NW;
   }
+}
+
+/**
+ * The `getCurrentPosition()` method of the Geolocation interface is used to get the current position of the device.
+ * @param options
+ * @returns
+ */
+export function getCurrentPosition(
+  options?: PositionOptions,
+): Promise<GeolocationPosition> {
+  return new Promise((resolve, reject) => {
+    if (!("geolocation" in navigator)) {
+      return reject(new Error("Geolocation is not supported by your browser."));
+    }
+    navigator.geolocation.getCurrentPosition(resolve, reject, options);
+  });
 }
