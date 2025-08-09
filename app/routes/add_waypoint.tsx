@@ -5,7 +5,7 @@ import {
   useNavigation,
   redirect,
   useLoaderData,
-} from "react-router-dom";
+} from "react-router";
 import { addWaypoint } from "~/services/db";
 import { Button } from "~/components/button";
 import { Input } from "~/components/input";
@@ -51,9 +51,9 @@ export const clientAction = async ({ request }: any) => {
   const longitude = parseFloat(formData.get("longitude") as string);
   const altitude = formData.get("altitude")
     ? parseFloat(formData.get("altitude") as string)
-    : null;
+    : undefined;
   const notes = formData.get("notes") as string;
-  const imageDataUrl = formData.get("imageDataUrl") as string | null;
+  const imageDataUrl = formData.get("imageDataUrl") as string | undefined;
 
   if (!name.trim()) {
     return { error: "Waypoint name is required." };
@@ -124,7 +124,7 @@ export default function AddWaypoint({ loaderData }: any) {
       } catch (err: any) {
         console.error("Error using ImageCapture API:", err);
         setImageError(
-          `Camera access denied or not available: ${err.message}. You can try choosing a file instead.`
+          `Camera access denied or not available: ${err.message}. You can try choosing a file instead.`,
         );
         setIsCapturing(false);
       }
@@ -138,7 +138,7 @@ export default function AddWaypoint({ loaderData }: any) {
     if (streamRef.current) {
       try {
         const imageCapture = new ImageCapture(
-          streamRef.current.getVideoTracks()[0]
+          streamRef.current.getVideoTracks()[0],
         );
         const blob = await imageCapture.takePhoto();
         const reader = new FileReader();
@@ -231,7 +231,7 @@ export default function AddWaypoint({ loaderData }: any) {
               latitude !== null && longitude !== null
                 ? `${coordinateFormat(latitude, 6)}, ${coordinateFormat(
                     longitude,
-                    6
+                    6,
                   )}`
                 : "Loading..."
             }
