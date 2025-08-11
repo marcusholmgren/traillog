@@ -1,64 +1,78 @@
-import { useState } from "react";
-import { useNavigate } from "react-router";
-import type * as GeoJSON from "geojson";
-import { type Route } from "~/services/db";
-import { Button } from "~/components/button";
-import { TrashIcon, EyeIcon, MapIcon } from "@heroicons/react/24/outline";
+import { EyeIcon, MapIcon, TrashIcon } from "@heroicons/react/24/outline";
 import {
-  Dialog,
-  DialogActions,
-  DialogBody,
-  DialogDescription,
-  DialogTitle,
-} from "~/components/dialog";
+  isRouteErrorResponse,
+  useFetcher,
+  useNavigate,
+  useNavigation,
+  useRouteError,
+} from "react-router";
 import {
   Alert,
   AlertActions,
   AlertBody,
-  AlertTitle,
   AlertDescription,
+  AlertTitle,
 } from "~/components/alert";
-import { useRoutes } from "~/hooks/useRoutes";
+import { Button } from "~/components/button";
 import { EntityPageLayout } from "~/components/entity-page-layout";
 import { ResourceList } from "~/components/resource-list";
 import { useAlert } from "~/hooks/useAlert";
+import {
+  deleteRoute as dbDeleteRoute,
+  getSavedRoutes,
+  type Route as dbRoute,
+} from "~/services/db";
+import type { Route } from "./+types/saved_routes";
 
-export default function SavedRoutesPage() {
+export async function clientLoader({ params }: Route.ClientLoaderArgs) {
+  const routes = await getSavedRoutes();
+  return { routes };
+}
+
+export async function clientAction({ request }: Route.ClientActionArgs) {
+  const formData = await request.formData();
+  const routeId = formData.get("routeId");
+  if (typeof routeId === "string") {
+    await dbDeleteRoute(Number(routeId));
+    return { ok: true };
+  }
+  return { ok: false, error: "Invalid routeId" };
+}
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+  return (
+    <EntityPageLayout pageTitle="Error">
+      <div
+        className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
+        role="alert"
+      >
+        <strong className="font-bold">Oops! </strong>
+        <span className="block sm:inline">
+          {isRouteErrorResponse(error) ? error.data : "Something went wrong."}
+        </span>
+      </div>
+    </EntityPageLayout>
+  );
+}
+
+export default function SavedRoutesPage({
+  actionData,
+  loaderData,
+}: Route.ComponentProps) {
   const navigate = useNavigate();
-  const { routes, isLoading, error: routesError, deleteRoute } = useRoutes();
+  const { routes } = loaderData;
+  const fetcher = useFetcher();
+  const navigation = useNavigation();
   const { alert, showAlert } = useAlert();
 
-  const [routeToDelete, setRouteToDelete] = useState<Route | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  const error = routesError || (isDeleting && "Failed to delete route.");
+  const isLoading = navigation.state === "loading";
 
   const handleCreateNewRoute = () => {
     navigate("/routes/create");
   };
 
-  const openDeleteConfirmDialog = (route: Route) => {
-    setRouteToDelete(route);
-  };
-
-  const closeDeleteConfirmDialog = () => {
-    setRouteToDelete(null);
-  };
-
-  const handleDeleteRoute = async () => {
-    if (!routeToDelete) return;
-    setIsDeleting(true);
-    try {
-      await deleteRoute(routeToDelete.id);
-      closeDeleteConfirmDialog();
-    } catch (err) {
-      console.error("Error deleting route from UI:", err);
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  const handleViewRouteOnMap = (route: Route) => {
+  const handleViewRouteOnMap = (route: dbRoute) => {
     try {
       if (
         !route.geometry ||
@@ -77,8 +91,8 @@ export default function SavedRoutesPage() {
         .join(";");
       navigate(
         `/map?waypoints=${coordinatesString}&routeName=${encodeURIComponent(
-          route.name
-        )}`
+          route.name,
+        )}`,
       );
     } catch (e) {
       console.error("Failed to prepare route for viewing on map", e);
@@ -89,7 +103,7 @@ export default function SavedRoutesPage() {
     }
   };
 
-  const renderRouteItem = (route: Route) => (
+  const renderRouteItem = (route: dbRoute) => (
     <div className="p-4 flex items-center justify-between gap-4 hover:bg-slate-50">
       <div className="flex-grow">
         <h2 className="font-bold text-blue-700">{route.name}</h2>
@@ -107,14 +121,24 @@ export default function SavedRoutesPage() {
         >
           <EyeIcon className="h-5 w-5" />
         </Button>
-        <Button
-          plain
-          onClick={() => openDeleteConfirmDialog(route)}
-          aria-label={`Delete route ${route.name}`}
-          className="p-2 text-slate-600 hover:text-red-600"
+        <fetcher.Form
+          method="post"
+          onSubmit={(event) => {
+            if (!confirm("Are you sure you want to delete this route?")) {
+              event.preventDefault();
+            }
+          }}
         >
-          <TrashIcon className="h-5 w-5" />
-        </Button>
+          <input type="hidden" name="routeId" value={route.id} />
+          <Button
+            plain
+            type="submit"
+            aria-label={`Delete route ${route.name}`}
+            className="p-2 text-slate-600 hover:text-red-600"
+          >
+            <TrashIcon className="h-5 w-5" />
+          </Button>
+        </fetcher.Form>
       </div>
     </div>
   );
@@ -144,48 +168,11 @@ export default function SavedRoutesPage() {
         items={routes}
         renderItem={renderRouteItem}
         isLoading={isLoading}
-        error={error}
+        error={null} // Error is handled by ErrorBoundary
         emptyStateMessage={emptyStateContent}
         itemKey="id"
         itemClassName=""
       />
-
-      {routeToDelete && (
-        <Dialog
-          open={!!routeToDelete}
-          onClose={closeDeleteConfirmDialog}
-          size="lg"
-        >
-          <DialogTitle>Delete Route</DialogTitle>
-          <DialogDescription>
-            Are you sure you want to delete the route "{routeToDelete.name}"?
-            This action cannot be undone.
-          </DialogDescription>
-          <DialogBody>
-            <p>
-              This route consists of{" "}
-              {routeToDelete.geometry?.coordinates?.length ?? 0} coordinate
-              point(s).
-            </p>
-          </DialogBody>
-          <DialogActions>
-            <Button
-              plain
-              onClick={closeDeleteConfirmDialog}
-              disabled={isDeleting}
-            >
-              Cancel
-            </Button>
-            <Button
-              color="red"
-              onClick={handleDeleteRoute}
-              disabled={isDeleting}
-            >
-              {isDeleting ? "Deleting..." : "Delete"}
-            </Button>
-          </DialogActions>
-        </Dialog>
-      )}
       {alert.isOpen && (
         <Alert open={alert.isOpen} onClose={alert.hide}>
           <AlertTitle>{alert.title}</AlertTitle>
