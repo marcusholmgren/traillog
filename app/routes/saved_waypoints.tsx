@@ -23,6 +23,9 @@ import {
   dateFormatter,
   numberFormat,
 } from "~/services/formatter";
+import { useSortedWaypoints } from "~/hooks/useSortedWaypoints";
+import { Switch } from "~/components/switch";
+import { Field, Label } from "~/components/fieldset";
 
 export async function clientLoader({ params }: Route.ClientLoaderArgs) {
   const savedWaypoints = await getSavedWaypoints();
@@ -55,8 +58,14 @@ export default function SavedWaypoints({
   const isLoading = navigation.state === "loading";
 
   const data = actionData || loaderData;
-  const savedWaypoints = data.waypoints;
   const error = data.error;
+
+  const {
+    sortedWaypoints,
+    toggleSorting,
+    isSortingEnabled,
+    userLocation,
+  } = useSortedWaypoints(data.waypoints);
 
   const handleAddWaypoint = () => {
     navigate("/waypoints/add");
@@ -123,7 +132,7 @@ export default function SavedWaypoints({
     }
   };
 
-  const renderWaypointItem = (waypoint: Waypoint) => (
+  const renderWaypointItem = (waypoint: Waypoint & { distance?: number }) => (
     <div className="flex items-start gap-4 p-4">
       {waypoint.imageDataUrl ? (
         <img
@@ -147,6 +156,11 @@ export default function SavedWaypoints({
         {waypoint.altitude && (
           <p className="text-sm text-slate-500">
             Altitude: {numberFormat(waypoint.altitude)}
+          </p>
+        )}
+        {isSortingEnabled && waypoint.distance && (
+          <p className="text-sm text-slate-500">
+            Distance: {numberFormat(waypoint.distance)} km
           </p>
         )}
         <p className="text-xs text-slate-400 pt-1">
@@ -209,15 +223,29 @@ export default function SavedWaypoints({
     </>
   );
 
+  const pageHeader = (
+    <div className="flex justify-end p-4">
+      <Field>
+        <Label>Sort by distance</Label>
+        <Switch
+          name="sort_by_distance"
+          checked={isSortingEnabled}
+          onChange={toggleSorting}
+        />
+      </Field>
+    </div>
+  );
+
   return (
     <EntityPageLayout
       pageTitle="Saved Waypoints"
       onAdd={handleAddWaypoint}
       addLabel="Add New Waypoint"
       footerContent={pageFooter}
+      headerContent={pageHeader}
     >
       <ResourceList
-        items={savedWaypoints || []}
+        items={sortedWaypoints || []}
         renderItem={renderWaypointItem}
         isLoading={isLoading}
         error={error}
