@@ -9,6 +9,7 @@ interface EntityPageLayoutProps {
   addLabel?: string;
   children: React.ReactNode;
   footerContent?: React.ReactNode;
+  headerContent?: React.ReactNode;
 }
 
 export function EntityPageLayout({
@@ -17,6 +18,7 @@ export function EntityPageLayout({
   addLabel = "Add New",
   children,
   footerContent,
+  headerContent,
 }: EntityPageLayoutProps) {
   const navigate = useNavigate();
 
@@ -27,10 +29,15 @@ export function EntityPageLayout({
   return (
     <div className="flex flex-col h-screen">
       <header className="flex items-center justify-between p-4 border-b border-slate-200">
-        <Button onClick={handleNavigateBack} className="p-2" aria-label="Go back">
+        <Button
+          onClick={handleNavigateBack}
+          className="p-2"
+          aria-label="Go back"
+        >
           <ArrowLeftIcon className="h-6 w-6" />
         </Button>
         <h1 className="text-lg font-bold">{pageTitle}</h1>
+        {headerContent}
         {onAdd ? (
           <Button onClick={onAdd} className="p-2" aria-label={addLabel}>
             <PlusIcon className="h-6 w-6" />
