@@ -21,9 +21,11 @@ export default function Settings() {
     };
 
     const handleExportWaypoints = async () => {
-        try {
-            const geoJsonString = await exportWaypoints();
-            const blob = new Blob([geoJsonString], {type: "application/json"});
+        const worker = new Worker(new URL('../workers/export-waypoints.worker.ts', import.meta.url), { type: 'module' });
+
+        worker.onmessage = (event) => {
+            const jsonString = event.data;
+            const blob = new Blob([jsonString], {type: "application/json"});
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
@@ -34,11 +36,17 @@ export default function Settings() {
             URL.revokeObjectURL(url);
             setShowSuccessMessage(true);
             setTimeout(() => setShowSuccessMessage(false), 3000);
-        } catch (error) {
+            worker.terminate();
+        };
+
+        worker.onerror = (error) => {
             setShowErrorMessage(true);
             setTimeout(() => setShowErrorMessage(false), 3000);
             console.error("Error exporting waypoints:", error);
-        }
+            worker.terminate();
+        };
+
+        worker.postMessage("export");
     };
 
     const handleImportWaypoints = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -62,24 +70,32 @@ export default function Settings() {
     };
 
     const handleExportRoutes = async () => {
-        try {
-            const jsonString = await exportRoutes();
+        const worker = new Worker(new URL('../workers/export-routes.worker.ts', import.meta.url), { type: 'module' });
+
+        worker.onmessage = (event) => {
+            const jsonString = event.data;
             const blob = new Blob([jsonString], {type: "application/json"});
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = "routes.json";
+            a.download = "routes.geojson";
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
             setShowSuccessMessage(true);
             setTimeout(() => setShowSuccessMessage(false), 3000);
-        } catch (error) {
+            worker.terminate();
+        };
+
+        worker.onerror = (error) => {
             setShowErrorMessage(true);
             setTimeout(() => setShowErrorMessage(false), 3000);
             console.error("Error exporting routes:", error);
-        }
+            worker.terminate();
+        };
+
+        worker.postMessage("export");
     };
 
     const handleImportRoutes = async (event: React.ChangeEvent<HTMLInputElement>) => {

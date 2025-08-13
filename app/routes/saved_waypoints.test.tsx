@@ -1,12 +1,45 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach, Mock } from "vitest";
-import { MemoryRouter, NavLink } from "react-router";
 import SavedWaypoints, { clientLoader, clientAction } from "./saved_waypoints";
 import * as db from "~/services/db";
 
+const mockPostMessage = vi.fn();
+const mockTerminate = vi.fn();
+let onmessageCallback: (event: { data: any }) => void = () => {};
+let onerrorCallback: (error: any) => void = () => {};
+
+vi.stubGlobal('Worker', vi.fn((url: string | URL, options?: WorkerOptions) => {
+    const worker = {
+        url,
+        postMessage: mockPostMessage,
+        terminate: mockTerminate,
+        set onmessage(callback: (event: { data: any }) => void) {
+            onmessageCallback = callback;
+        },
+        get onmessage() {
+            return onmessageCallback;
+        },
+        set onerror(callback: (error: any) => void) {
+            onerrorCallback = callback;
+        },
+        get onerror() {
+            return onerrorCallback;
+        }
+    };
+    return worker;
+}));
+
+
 // Mock dependencies
-vi.mock("~/services/db");
+vi.mock("~/services/db", async () => {
+    const actual = await vi.importActual("~/services/db");
+    return {
+      ...actual,
+      getSavedWaypoints: vi.fn(),
+      deleteWaypoint: vi.fn(),
+    };
+  });
 
 const mockNavigate = vi.fn();
 vi.mock("react-router", async () => {
@@ -25,7 +58,6 @@ vi.mock("react-router", async () => {
 const mockDb = db as {
   getSavedWaypoints: Mock;
   deleteWaypoint: Mock;
-  waypointsToGeoJSON: Mock;
 };
 
 const mockWaypoints: db.Waypoint[] = [
@@ -111,26 +143,22 @@ describe("SavedWaypoints", () => {
 
     it("handles GeoJSON export", async () => {
         const user = userEvent.setup();
-        mockDb.getSavedWaypoints.mockResolvedValue(mockWaypoints);
-        mockDb.waypointsToGeoJSON.mockReturnValue({ type: "FeatureCollection", features: [] });
 
         render(<SavedWaypoints loaderData={{ waypoints: mockWaypoints, error: null }} actionData={null} />);
 
-        // Spy on document.createElement after the initial render
         const mockLink = { href: "", download: "", click: vi.fn() };
         const spy = vi.spyOn(document, "createElement").mockReturnValue(mockLink as any);
-        // Also mock appendChild/removeChild to avoid DOM errors in JSDOM
         const appendSpy = vi.spyOn(document.body, "appendChild").mockImplementation(() => {});
         const removeSpy = vi.spyOn(document.body, "removeChild").mockImplementation(() => {});
 
         await user.click(screen.getByText(/export all to geojson/i));
 
-        await waitFor(() => {
-            expect(mockDb.waypointsToGeoJSON).toHaveBeenCalledWith(mockWaypoints);
-            expect(mockLink.click).toHaveBeenCalled();
-        });
+        await waitFor(() => expect(mockPostMessage).toHaveBeenCalledTimes(1));
 
-        // Clean up spies
+        onmessageCallback({data: '{"type":"FeatureCollection","features":[]}'});
+
+        await waitFor(() => expect(mockLink.click).toHaveBeenCalled());
+
         spy.mockRestore();
         appendSpy.mockRestore();
         removeSpy.mockRestore();

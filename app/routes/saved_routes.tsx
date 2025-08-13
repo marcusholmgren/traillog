@@ -1,4 +1,4 @@
-import { EyeIcon, MapIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { ArrowDownOnSquareIcon, EyeIcon, MapIcon, TrashIcon } from "@heroicons/react/24/outline";
 import {
   isRouteErrorResponse,
   useFetcher,
@@ -103,6 +103,32 @@ export default function SavedRoutesPage({
     }
   };
 
+  const handleExportRoutesToGeoJSON = async () => {
+    const worker = new Worker(new URL('../workers/export-routes.worker.ts', import.meta.url), { type: 'module' });
+
+    worker.onmessage = (event) => {
+      const jsonString = event.data;
+      const blob = new Blob([jsonString], { type: "application/json" });
+      const href = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = href;
+      link.download = "routes.geojson";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(href);
+      worker.terminate();
+    };
+
+    worker.onerror = (error) => {
+      console.error("Error exporting to GeoJSON:", error);
+      alert("Failed to export routes. See console for details.");
+      worker.terminate();
+    };
+
+    worker.postMessage("export");
+  };
+
   const renderRouteItem = (route: dbRoute) => (
     <div className="p-4 flex items-center justify-between gap-4 hover:bg-slate-50">
       <div className="flex-grow">
@@ -158,11 +184,24 @@ export default function SavedRoutesPage({
     </div>
   );
 
+  const pageFooter = (
+    <>
+      <Button
+        onClick={handleExportRoutesToGeoJSON}
+        className="w-full flex items-center justify-center gap-2"
+      >
+        <ArrowDownOnSquareIcon className="h-5 w-5" />
+        Export all to GeoJSON
+      </Button>
+    </>
+  );
+
   return (
     <EntityPageLayout
       pageTitle="Saved Routes"
       onAdd={handleCreateNewRoute}
       addLabel="Create New Route"
+      footerContent={pageFooter}
     >
       <ResourceList
         items={routes}
