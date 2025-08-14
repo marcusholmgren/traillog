@@ -107,16 +107,10 @@ export default function SavedWaypoints({
   };
 
   const handleExportToGeoJSON = async () => {
-    try {
-      // It's better to use the waypoints from the hook's state if they are always up-to-date
-      // or fetch fresh ones if necessary, though the hook should keep them fresh.
-      const currentWaypoints = await dbGetSavedWaypoints(); // Or use 'waypoints' from hook if always current
-      if (currentWaypoints.length === 0) {
-        alert("No waypoints to export.");
-        return;
-      }
-      const geojsonData = waypointsToGeoJSON(currentWaypoints);
-      const jsonString = JSON.stringify(geojsonData, null, 2);
+    const worker = new Worker(new URL('../workers/export-waypoints.worker.ts', import.meta.url), { type: 'module' });
+
+    worker.onmessage = (event) => {
+      const jsonString = event.data;
       const blob = new Blob([jsonString], { type: "application/json" });
       const href = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -126,10 +120,16 @@ export default function SavedWaypoints({
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(href);
-    } catch (err) {
-      console.error("Error exporting to GeoJSON:", err);
+      worker.terminate();
+    };
+
+    worker.onerror = (error) => {
+      console.error("Error exporting to GeoJSON:", error);
       alert("Failed to export waypoints. See console for details.");
-    }
+      worker.terminate();
+    };
+
+    worker.postMessage("export");
   };
 
   const renderWaypointItem = (waypoint: Waypoint & { distance?: number }) => (
