@@ -1,10 +1,11 @@
-import { ArrowDownOnSquareIcon, EyeIcon, MapIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { ArrowDownOnSquareIcon, EyeIcon, MapIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 import {
   isRouteErrorResponse,
   useFetcher,
   useNavigate,
   useNavigation,
   useRouteError,
+  NavLink,
 } from "react-router";
 import {
   Alert,
@@ -147,6 +148,15 @@ export default function SavedRoutesPage({
         >
           <EyeIcon className="h-5 w-5" />
         </Button>
+        <NavLink to={`/routes/edit/${route.id}`}>
+          <Button
+            plain
+            aria-label={`Edit route ${route.name}`}
+            className="p-2 text-slate-600 hover:text-blue-600"
+          >
+            <PencilIcon className="h-5 w-5" />
+          </Button>
+        </NavLink>
         <fetcher.Form
           method="post"
           onSubmit={(event) => {
