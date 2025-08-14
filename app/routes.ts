@@ -18,6 +18,7 @@ export default [
   ...prefix("routes", [
     route("/", "routes/saved_routes.tsx"), // Added saved_routes
     route("/create", "routes/create_route.tsx"),
+    route("/edit/:routeId", "routes/edit_route.tsx"),
   ]),
   route("/settings", "routes/settings.tsx"),
 ] satisfies RouteConfig;

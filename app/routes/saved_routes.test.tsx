@@ -1,7 +1,8 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import { MemoryRouter } from "react-router";
 import * as db from "~/services/db";
 import SavedRoutesPage, { clientAction, clientLoader } from "./saved_routes";
 
@@ -97,10 +98,12 @@ describe("SavedRoutesPage", () => {
   describe("Component UI", () => {
     it("displays routes from loaderData", () => {
       render(
-        <SavedRoutesPage
-          loaderData={{ routes: mockRoutesData }}
-          actionData={undefined}
-        />,
+        <MemoryRouter>
+          <SavedRoutesPage
+            loaderData={{ routes: mockRoutesData }}
+            actionData={undefined}
+          />
+        </MemoryRouter>
       );
       expect(screen.getByText("Scenic Drive")).toBeInTheDocument();
       expect(screen.getByText("City Tour")).toBeInTheDocument();
@@ -108,20 +111,31 @@ describe("SavedRoutesPage", () => {
 
     it("displays empty message when there are no routes", () => {
       render(
-        <SavedRoutesPage loaderData={{ routes: [] }} actionData={undefined} />,
+        <MemoryRouter>
+          <SavedRoutesPage
+            loaderData={{ routes: [] }}
+            actionData={undefined}
+          />
+        </MemoryRouter>
       );
       expect(screen.getByText("No Saved Routes Yet")).toBeInTheDocument();
     });
 
     it("calls delete action when delete button is clicked", async () => {
-      const user = userEvent.setup();
       render(
-        <SavedRoutesPage
-          loaderData={{ routes: mockRoutesData }}
-          actionData={undefined}
-        />,
+        <MemoryRouter>
+          <SavedRoutesPage
+            loaderData={{ routes: mockRoutesData }}
+            actionData={undefined}
+          />
+        </MemoryRouter>
       );
-      await user.click(screen.getAllByLabelText(/Delete route/i)[0]);
+      const deleteButton = screen.getAllByLabelText(/Delete route/i)[0];
+      const form = deleteButton.closest('form');
+      expect(form).not.toBeNull();
+      if (form) {
+        fireEvent.submit(form);
+      }
       expect(window.confirm).toHaveBeenCalled();
     });
   });
