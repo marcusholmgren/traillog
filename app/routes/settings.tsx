@@ -1,17 +1,34 @@
-import {useState, useRef} from 'react';
+import {useState, useRef, useEffect} from 'react';
 import {Button} from '~/components/button'
 import {Dialog, DialogActions, DialogBody, DialogTitle} from '~/components/dialog'
 import {Heading} from '~/components/heading'
-import {clearAllWaypoints, exportWaypoints, importWaypoints, exportRoutes, importRoutes} from "~/services/db";
+import {
+    clearAllWaypoints,
+    exportWaypoints,
+    importWaypoints,
+    exportRoutes,
+    importRoutes,
+    clearAllRoutes,
+    deleteDatabase,
+    getStorageEstimate
+} from "~/services/db";
 import {Text} from "~/components/text";
+import {TrashIcon} from '@heroicons/react/24/outline';
 
 
 export default function Settings() {
     const [deleteAllDialog, setDeleteAllDialog] = useState(false);
+    const [deleteRoutesDialog, setDeleteRoutesDialog] = useState(false);
+    const [deleteDatabaseDialog, setDeleteDatabaseDialog] = useState(false);
+    const [storage, setStorage] = useState<{ usage: number, quota: number } | null>(null);
     const [showSuccessMessage, setShowSuccessMessage] = useState(false);
     const [showErrorMessage, setShowErrorMessage] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const routeFileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        getStorageEstimate().then(setStorage);
+    }, []);
 
     const handleDeleteAllData = async () => {
         await clearAllWaypoints();
@@ -19,6 +36,20 @@ export default function Settings() {
         setShowSuccessMessage(true);
         setTimeout(() => setShowSuccessMessage(false), 3000);
     };
+
+    const handleDeleteAllRoutes = async () => {
+        await clearAllRoutes();
+        setDeleteRoutesDialog(false);
+        setShowSuccessMessage(true);
+        setTimeout(() => setShowSuccessMessage(false), 3000);
+    }
+
+    const handleDeleteDatabase = async () => {
+        await deleteDatabase();
+        setDeleteDatabaseDialog(false);
+        setShowSuccessMessage(true);
+        setTimeout(() => setShowSuccessMessage(false), 3000);
+    }
 
     const handleExportWaypoints = async () => {
         const worker = new Worker(new URL('../workers/export-waypoints.worker.ts', import.meta.url), { type: 'module' });
@@ -128,6 +159,14 @@ export default function Settings() {
 
             <div className="mt-4 space-y-4">
                 <div>
+                    <Heading level={2}>Storage</Heading>
+                    {storage && (
+                        <Text>
+                            Using {(storage.usage / 1024 / 1024).toFixed(2)} MB of {(storage.quota / 1024 / 1024).toFixed(2)} MB
+                        </Text>
+                    )}
+                </div>
+                <div>
                     <Heading level={2}>Waypoints</Heading>
                     <div className="flex space-x-2 mt-2">
                         <Button onClick={() => fileInputRef.current?.click()}>Import Waypoints</Button>
@@ -161,9 +200,18 @@ export default function Settings() {
 
                 <div>
                     <Heading level={2}>Danger Zone</Heading>
-                    <Button color="red" onClick={() => setDeleteAllDialog(true)} className="mt-2">
-                        Delete all waypoints
-                    </Button>
+                    <div className="flex space-x-2 mt-2">
+                        <Button color="red" onClick={() => setDeleteAllDialog(true)}>
+                            Delete all waypoints
+                        </Button>
+                        <Button color="red" onClick={() => setDeleteRoutesDialog(true)}>
+                            Delete all routes
+                        </Button>
+                        <Button color="red" onClick={() => setDeleteDatabaseDialog(true)}>
+                            <TrashIcon className="h-5 w-5"/>
+                            Delete all data
+                        </Button>
+                    </div>
                 </div>
             </div>
 
@@ -177,15 +225,55 @@ export default function Settings() {
                     <p>
                         Are you sure you want to delete ALL waypoint data? This action cannot be undone.
                     </p>
-                    <DialogActions>
-                        <Button color="red" onClick={handleDeleteAllData}>
-                            Delete
-                        </Button>
-                        <Button onClick={() => setDeleteAllDialog(false)}>
-                            Cancel
-                        </Button>
-                    </DialogActions>
                 </DialogBody>
+                <DialogActions>
+                    <Button color="red" onClick={handleDeleteAllData}>
+                        Delete
+                    </Button>
+                    <Button onClick={() => setDeleteAllDialog(false)}>
+                        Cancel
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog
+                open={deleteRoutesDialog}
+                onClose={() => setDeleteRoutesDialog(false)}
+            >
+                <DialogTitle>Delete all routes</DialogTitle>
+                <DialogBody>
+                    <p>
+                        Are you sure you want to delete ALL route data? This action cannot be undone.
+                    </p>
+                </DialogBody>
+                <DialogActions>
+                    <Button color="red" onClick={handleDeleteAllRoutes}>
+                        Delete
+                    </Button>
+                    <Button onClick={() => setDeleteRoutesDialog(false)}>
+                        Cancel
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog
+                open={deleteDatabaseDialog}
+                onClose={() => setDeleteDatabaseDialog(false)}
+            >
+                <DialogTitle>Delete all data</DialogTitle>
+                <DialogBody>
+                    <p>
+                        Are you sure you want to delete ALL data? This action will remove the entire database and cannot be undone.
+                    </p>
+                </DialogBody>
+                <DialogActions>
+                    <Button color="red" onClick={handleDeleteDatabase}>
+                        Delete
+                    </Button>
+                    <Button onClick={() => setDeleteDatabaseDialog(false)}>
+                        Cancel
+                    </Button>
+                </DialogActions>
             </Dialog>
         </div>
     );
