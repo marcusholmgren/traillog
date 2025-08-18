@@ -179,6 +179,13 @@ export function ApplicationLayout({ children }: { children: React.ReactNode }) {
                 <Square2StackIcon />
                 <SidebarLabel>Routes</SidebarLabel>
               </SidebarItem>
+              <SidebarItem
+                to="/hiking"
+                current={pathname.startsWith("/hiking")}
+              >
+                <MapPinIcon />
+                <SidebarLabel>Hiking Mode</SidebarLabel>
+              </SidebarItem>
             </SidebarSection>
 
             <SidebarSection className="max-lg:hidden">
