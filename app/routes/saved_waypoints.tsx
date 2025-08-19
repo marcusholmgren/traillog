@@ -26,6 +26,8 @@ import {
 import { useSortedWaypoints } from "~/hooks/useSortedWaypoints";
 import { Switch } from "~/components/switch";
 import { Field, Label } from "~/components/fieldset";
+import { useAlert } from "~/hooks/useAlert";
+const { showAlert } = useAlert();
 
 export async function clientLoader({ params }: Route.ClientLoaderArgs) {
   const savedWaypoints = await getSavedWaypoints();
@@ -95,14 +97,16 @@ export default function SavedWaypoints({
         });
         console.log("Waypoint shared successfully");
       } catch (shareError) {
-        console.error("Error sharing waypoint:", shareError);
-        alert("Error sharing: " + (shareError as Error).message);
+        showAlert({
+          title: "Error sharing",
+          message: (shareError as Error).message
+        });
       }
     } else {
-      console.warn("Web Share API not supported in this browser.");
-      alert(
-        "Web Share API is not supported in your browser. Try copying the details manually."
-      );
+      showAlert({
+        title: "Web Share API not supported",
+        message: "Web Share API is not supported in your browser. Try copying the details manually."
+      });
     }
   };
 
@@ -125,7 +129,10 @@ export default function SavedWaypoints({
 
     worker.onerror = (error) => {
       console.error("Error exporting to GeoJSON:", error);
-      alert("Failed to export waypoints. See console for details.");
+      showAlert({
+        title: "Export Failed",
+        message: "Failed to export waypoints. See console for details."
+      });
       worker.terminate();
     };
 

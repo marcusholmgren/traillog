@@ -12,6 +12,7 @@ import {
 } from "~/components/dialog";
 import { Input } from "~/components/input";
 import { getCurrentPosition } from "~/services/geolocation";
+import { useAlert } from "~/hooks/useAlert";
 
 function coordinatesToLineString(
   waypoints: GeolocationCoordinates[],
@@ -28,6 +29,7 @@ function HikingPage() {
   const [waypoints, setWaypoints] = useState<GeolocationCoordinates[]>([]);
   const [isPromptingName, setIsPromptingName] = useState(false);
   const navigate = useNavigate();
+  const { showAlert } = useAlert();
 
   const getMyPosition = (): Promise<GeolocationPosition> => 
     getCurrentPosition({
@@ -42,10 +44,10 @@ function HikingPage() {
       setWaypoints([position.coords]);
       setIsHiking(true);
     } catch (error) {
-      console.error("Error getting current position:", error);
-      alert(
-        "Error getting current position. Please make sure you have enabled location services.",
-      );
+      showAlert({
+        title: "Location Error",
+        message: "Error getting current position. Please make sure you have enabled location services."
+      });
     }
   };
 
@@ -54,16 +56,19 @@ function HikingPage() {
       const position = await getMyPosition();
       setWaypoints((prevWaypoints) => [...prevWaypoints, position.coords]);
     } catch (error) {
-      console.error("Error getting current position:", error);
-      alert(
-        "Error getting current position. Please make sure you have enabled location services.",
-      );
+      showAlert({
+        title: "Location Error",
+        message: "Error getting current position. Please make sure you have enabled location services."
+      });
     }
   };
 
   const handleStopHike = () => {
     if (waypoints.length < 2) {
-      alert("You need at least 2 waypoints to save a hike.");
+      showAlert({
+        title: "Waypoint Error",
+        message: "You need at least 2 waypoints to save a hike."
+      });
       setIsHiking(false);
       setWaypoints([]);
       return;
@@ -77,21 +82,30 @@ function HikingPage() {
     const hikeName = (formData.get("hikeName") as string) || "";
 
     if (!hikeName.trim()) {
-      alert("Hike name cannot be empty.");
+      showAlert({
+        title: "Validation Error",
+        message: "Hike name cannot be empty."
+      });
       return;
     }
 
     try {
       const routeGeometry = coordinatesToLineString(waypoints);
       await addRoute(hikeName, routeGeometry);
-      alert("Hike saved successfully!");
+      showAlert({
+        title: "Success",
+        message: "Hike saved successfully!"
+      });
       setIsPromptingName(false);
       setIsHiking(false);
       setWaypoints([]);
       navigate("/routes");
     } catch (error) {
       console.error("Error saving hike:", error);
-      alert("Failed to save hike. Please try again.");
+      showAlert({
+        title: "Save Error",
+        message: "Failed to save hike. Please try again."
+      });
     }
   };
 
