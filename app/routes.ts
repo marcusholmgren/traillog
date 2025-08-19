@@ -20,4 +20,5 @@ export default [
     route("/create", "routes/create_route.tsx"),
   ]),
   route("/settings", "routes/settings.tsx"),
+  route("/hiking", "routes/hiking.tsx"),
 ] satisfies RouteConfig;
