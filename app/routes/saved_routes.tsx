@@ -122,7 +122,10 @@ export default function SavedRoutesPage({
 
     worker.onerror = (error) => {
       console.error("Error exporting to GeoJSON:", error);
-      alert("Failed to export routes. See console for details.");
+      showAlert({
+        title: "Export Failed",
+        message: "Failed to export routes. See console for details."
+      });
       worker.terminate();
     };
 
