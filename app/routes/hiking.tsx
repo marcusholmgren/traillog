@@ -35,14 +35,23 @@ const HikingPage: React.FC = () => {
     return new Promise((resolve, reject) => {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          resolve({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          });
-        },
-        (error) => {
-          reject(error);
-        }
+function getCurrentPosition(): Promise<Coordinates> {
+  return new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        resolve({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        });
+      },
+      (error) => {
+        reject(error);
+      }
+    );
+  });
+}
+
+const HikingPage: React.FC = () => {
       );
     });
   };
@@ -72,7 +81,29 @@ const HikingPage: React.FC = () => {
     if (waypoints.length < 2) {
         alert("You need at least 2 waypoints to save a hike.");
         setIsHiking(false);
-        setWaypoints([]);
+  const retrieveCurrentPosition = async () => {
+    try {
+      const position = await getCurrentPosition();
+      setWaypoints((prevWaypoints) => [...prevWaypoints, position]);
+      return position;
+    } catch (error) {
+      console.error("Error getting current position:", error);
+      alert("Error getting current position. Please make sure you have enabled location services.");
+      return null;
+    }
+  };
+
+  const handleStartHike = async () => {
+    const position = await retrieveCurrentPosition();
+    if (position) {
+      setWaypoints([position]);
+      setIsHiking(true);
+    }
+  };
+
+  const handleAddWaypoint = async () => {
+    await retrieveCurrentPosition();
+  };
         return;
     }
     setIsPromptingName(true);
