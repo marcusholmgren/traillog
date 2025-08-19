@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router';
+import React, { useState } from "react";
+import { useNavigate } from "react-router";
 import type * as GeoJSON from "geojson";
-import { addRoute } from '~/services/db';
-import { Button } from '~/components/button';
+import { addRoute } from "~/services/db";
+import { Button } from "~/components/button";
 import {
   Dialog,
   DialogActions,
@@ -10,101 +10,63 @@ import {
   DialogDescription,
   DialogTitle,
 } from "~/components/dialog";
-import { Input } from '~/components/input';
+import { Input } from "~/components/input";
+import { getCurrentPosition } from "~/services/geolocation";
 
-interface Coordinates {
-  latitude: number;
-  longitude: number;
+function coordinatesToLineString(
+  waypoints: GeolocationCoordinates[],
+): GeoJSON.LineString {
+  const coordinates = waypoints.map((wp) => [wp.longitude, wp.latitude]);
+  return {
+    type: "LineString",
+    coordinates: coordinates,
+  };
 }
 
-function coordinatesToLineString(waypoints: Coordinates[]): GeoJSON.LineString {
-    const coordinates = waypoints.map((wp) => [wp.longitude, wp.latitude]);
-    return {
-        type: "LineString",
-        coordinates: coordinates,
-    };
-}
-
-const HikingPage: React.FC = () => {
+function HikingPage() {
   const [isHiking, setIsHiking] = useState(false);
-  const [waypoints, setWaypoints] = useState<Coordinates[]>([]);
+  const [waypoints, setWaypoints] = useState<GeolocationCoordinates[]>([]);
   const [isPromptingName, setIsPromptingName] = useState(false);
   const navigate = useNavigate();
 
-  const getCurrentPosition = (): Promise<Coordinates> => {
-    return new Promise((resolve, reject) => {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-function getCurrentPosition(): Promise<Coordinates> {
-  return new Promise((resolve, reject) => {
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        resolve({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        });
-      },
-      (error) => {
-        reject(error);
-      }
-    );
-  });
-}
-
-const HikingPage: React.FC = () => {
-      );
+  const getMyPosition = (): Promise<GeolocationPosition> => 
+    getCurrentPosition({
+      enableHighAccuracy: true,
+      timeout: 5000,
+      maximumAge: 0,
     });
-  };
 
   const handleStartHike = async () => {
     try {
-      const position = await getCurrentPosition();
-      setWaypoints([position]);
+      const position = await getMyPosition();
+      setWaypoints([position.coords]);
       setIsHiking(true);
     } catch (error) {
       console.error("Error getting current position:", error);
-      alert("Error getting current position. Please make sure you have enabled location services.");
+      alert(
+        "Error getting current position. Please make sure you have enabled location services.",
+      );
     }
   };
 
   const handleAddWaypoint = async () => {
     try {
-      const position = await getCurrentPosition();
-      setWaypoints((prevWaypoints) => [...prevWaypoints, position]);
+      const position = await getMyPosition();
+      setWaypoints((prevWaypoints) => [...prevWaypoints, position.coords]);
     } catch (error) {
       console.error("Error getting current position:", error);
-      alert("Error getting current position. Please make sure you have enabled location services.");
+      alert(
+        "Error getting current position. Please make sure you have enabled location services.",
+      );
     }
   };
 
   const handleStopHike = () => {
     if (waypoints.length < 2) {
-        alert("You need at least 2 waypoints to save a hike.");
-        setIsHiking(false);
-  const retrieveCurrentPosition = async () => {
-    try {
-      const position = await getCurrentPosition();
-      setWaypoints((prevWaypoints) => [...prevWaypoints, position]);
-      return position;
-    } catch (error) {
-      console.error("Error getting current position:", error);
-      alert("Error getting current position. Please make sure you have enabled location services.");
-      return null;
-    }
-  };
-
-  const handleStartHike = async () => {
-    const position = await retrieveCurrentPosition();
-    if (position) {
-      setWaypoints([position]);
-      setIsHiking(true);
-    }
-  };
-
-  const handleAddWaypoint = async () => {
-    await retrieveCurrentPosition();
-  };
-        return;
+      alert("You need at least 2 waypoints to save a hike.");
+      setIsHiking(false);
+      setWaypoints([]);
+      return;
     }
     setIsPromptingName(true);
   };
@@ -115,21 +77,21 @@ const HikingPage: React.FC = () => {
     const hikeName = (formData.get("hikeName") as string) || "";
 
     if (!hikeName.trim()) {
-        alert("Hike name cannot be empty.");
-        return;
+      alert("Hike name cannot be empty.");
+      return;
     }
 
     try {
-        const routeGeometry = coordinatesToLineString(waypoints);
-        await addRoute(hikeName, routeGeometry);
-        alert("Hike saved successfully!");
-        setIsPromptingName(false);
-        setIsHiking(false);
-        setWaypoints([]);
-        navigate('/routes');
+      const routeGeometry = coordinatesToLineString(waypoints);
+      await addRoute(hikeName, routeGeometry);
+      alert("Hike saved successfully!");
+      setIsPromptingName(false);
+      setIsHiking(false);
+      setWaypoints([]);
+      navigate("/routes");
     } catch (error) {
-        console.error("Error saving hike:", error);
-        alert("Failed to save hike. Please try again.");
+      console.error("Error saving hike:", error);
+      alert("Failed to save hike. Please try again.");
     }
   };
 
@@ -141,7 +103,9 @@ const HikingPage: React.FC = () => {
       ) : (
         <>
           <Button onClick={handleAddWaypoint}>Add Waypoint</Button>
-          <Button color="red" onClick={handleStopHike}>Stop Hike</Button>
+          <Button color="red" onClick={handleStopHike}>
+            Stop Hike
+          </Button>
         </>
       )}
       <div>
@@ -154,10 +118,7 @@ const HikingPage: React.FC = () => {
           ))}
         </ul>
       </div>
-      <Dialog
-        open={isPromptingName}
-        onClose={() => setIsPromptingName(false)}
-      >
+      <Dialog open={isPromptingName} onClose={() => setIsPromptingName(false)}>
         <form onSubmit={handleSaveHike}>
           <DialogTitle>Hike Name</DialogTitle>
           <DialogDescription>
@@ -184,6 +145,6 @@ const HikingPage: React.FC = () => {
       </Dialog>
     </div>
   );
-};
+}
 
 export default HikingPage;
