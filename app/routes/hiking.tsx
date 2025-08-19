@@ -12,6 +12,8 @@ import {
 } from "~/components/dialog";
 import { Input } from "~/components/input";
 import { getCurrentPosition } from "~/services/geolocation";
+import { useAlert } from "~/hooks/useAlert";
+import { Alert, AlertActions, AlertDescription, AlertTitle } from "~/components/alert";
 
 function coordinatesToLineString(
   waypoints: GeolocationCoordinates[],
@@ -27,6 +29,7 @@ function HikingPage() {
   const [isHiking, setIsHiking] = useState(false);
   const [waypoints, setWaypoints] = useState<GeolocationCoordinates[]>([]);
   const [isPromptingName, setIsPromptingName] = useState(false);
+  const {alert, showAlert} = useAlert();
   const navigate = useNavigate();
 
   const getMyPosition = (): Promise<GeolocationPosition> => 
@@ -43,8 +46,11 @@ function HikingPage() {
       setIsHiking(true);
     } catch (error) {
       console.error("Error getting current position:", error);
-      alert(
-        "Error getting current position. Please make sure you have enabled location services.",
+      showAlert(
+        {
+          title: "Error Getting Current Position",
+          message:"Please make sure you have enabled location services."
+        }
       );
     }
   };
@@ -55,15 +61,23 @@ function HikingPage() {
       setWaypoints((prevWaypoints) => [...prevWaypoints, position.coords]);
     } catch (error) {
       console.error("Error getting current position:", error);
-      alert(
-        "Error getting current position. Please make sure you have enabled location services.",
+      showAlert(
+        {
+          title: "Error Getting Current Position",
+          message:"Please make sure you have enabled location services."
+        }
       );
     }
   };
 
   const handleStopHike = () => {
     if (waypoints.length < 2) {
-      alert("You need at least 2 waypoints to save a hike.");
+      showAlert(
+        {
+          title: "Cannot Save Hike",
+          message:"You need at least 2 waypoints to save a hike."
+        }
+      );
       setIsHiking(false);
       setWaypoints([]);
       return;
@@ -77,21 +91,36 @@ function HikingPage() {
     const hikeName = (formData.get("hikeName") as string) || "";
 
     if (!hikeName.trim()) {
-      alert("Hike name cannot be empty.");
+      showAlert(
+        {
+          title: "Invalid Name",
+          message:"Hike name cannot be empty."
+        }
+      );
       return;
     }
 
     try {
       const routeGeometry = coordinatesToLineString(waypoints);
       await addRoute(hikeName, routeGeometry);
-      alert("Hike saved successfully!");
+      showAlert(
+        {
+          title: "Success!",
+          message:'Hike saved successfully!'
+        }
+      );
       setIsPromptingName(false);
       setIsHiking(false);
       setWaypoints([]);
       navigate("/routes");
     } catch (error) {
       console.error("Error saving hike:", error);
-      alert("Failed to save hike. Please try again.");
+      showAlert(
+        {
+          title: "Save Failed",
+          message:"Failed to save hike. Please try again."
+        }
+      );
     }
   };
 
@@ -118,6 +147,23 @@ function HikingPage() {
           ))}
         </ul>
       </div>
+      {/*Alert for general notification */}
+      {alert.isOpen && (
+        <Alert open={alert.isOpen} onClose={alert.hide}>
+          <AlertTitle>{alert.title}</AlertTitle>
+          <AlertDescription>{alert.message}</AlertDescription>
+          <AlertActions>
+            <Button
+              onClick={() => {
+                alert.hide();
+                if (alert.onConfirm) alert.onConfirm();
+              }}
+            >
+              OK
+            </Button>
+          </AlertActions>
+        </Alert>
+      )}
       <Dialog open={isPromptingName} onClose={() => setIsPromptingName(false)}>
         <form onSubmit={handleSaveHike}>
           <DialogTitle>Hike Name</DialogTitle>
