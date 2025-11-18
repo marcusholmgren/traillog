@@ -235,6 +235,25 @@ export async function deleteRoute(id: number): Promise<void> {
   await db.delete(STORE_NAME_ROUTES, id);
 }
 
+export async function clearAllRoutes(): Promise<void> {
+  const db = await openWaypointsDB();
+  await db.clear(STORE_NAME_ROUTES);
+}
+
+export async function deleteDatabase(): Promise<void> {
+  const db = await openWaypointsDB();
+  await db.close();
+  await indexedDB.deleteDatabase(DB_NAME);
+}
+
+export async function getStorageEstimate(): Promise<{usage: number, quota: number}> {
+    const estimate = await navigator.storage.estimate();
+    return {
+        usage: estimate.usage ?? 0,
+        quota: estimate.quota ?? 0
+    }
+}
+
 export async function exportRoutes(): Promise<string> {
   const routes = await getSavedRoutes();
   const features: GeoJSON.Feature<GeoJSON.LineString | GeoJSON.Polygon>[] = routes.map(route => ({

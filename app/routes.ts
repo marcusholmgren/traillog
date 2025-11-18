@@ -21,4 +21,5 @@ export default [
     route("/edit/:routeId", "routes/edit_route.tsx"),
   ]),
   route("/settings", "routes/settings.tsx"),
+  route("/hiking", "routes/hiking.tsx"),
 ] satisfies RouteConfig;
