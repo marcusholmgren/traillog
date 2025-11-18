@@ -214,6 +214,22 @@ export async function getRouteById(id: number): Promise<Route | undefined> {
   return db.get(STORE_NAME_ROUTES, id);
 }
 
+export async function updateRouteName(id: number, name: string): Promise<Route> {
+  const db = await openWaypointsDB();
+  const tx = db.transaction(STORE_NAME_ROUTES, "readwrite");
+  const route = await tx.store.get(id);
+
+  if (!route) {
+    throw new Error(`Route with id ${id} not found`);
+  }
+
+  const updatedRoute: Route = { ...route, name };
+
+  await tx.store.put(updatedRoute);
+  await tx.done;
+  return updatedRoute;
+}
+
 export async function deleteRoute(id: number): Promise<void> {
   const db = await openWaypointsDB();
   await db.delete(STORE_NAME_ROUTES, id);
