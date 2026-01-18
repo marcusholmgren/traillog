@@ -7,8 +7,9 @@ export function Welcome() {
     <main className="flex items-center justify-center pt-16 pb-4">
       <div className="flex-1 flex flex-col items-center gap-16 min-h-0">
         <header className="flex flex-col items-center gap-9">
-          <div className="w-[500px] max-w-[100vw] p-4">
+          <div className="w-[500px] max-w-[100vw] overflow-hidden">
             <img
+              className="w-full h-auto rounded-xl"
               src={`${BASE_URL}Gemini_Generated_1200.jpg`} // Fallback for older browsers
               srcSet={`
                 ${BASE_URL}Gemini_Generated_800.jpg 800w,

@@ -9,26 +9,33 @@ const mockTerminate = vi.fn();
 let onmessageCallback: (event: { data: any }) => void = () => {};
 let onerrorCallback: (error: any) => void = () => {};
 
-vi.stubGlobal('Worker', vi.fn((url: string | URL, options?: WorkerOptions) => {
-    const worker = {
-        url,
-        postMessage: mockPostMessage,
-        terminate: mockTerminate,
-        set onmessage(callback: (event: { data: any }) => void) {
-            onmessageCallback = callback;
-        },
-        get onmessage() {
-            return onmessageCallback;
-        },
-        set onerror(callback: (error: any) => void) {
-            onerrorCallback = callback;
-        },
-        get onerror() {
-            return onerrorCallback;
-        }
-    };
-    return worker;
-}));
+class MockWorker {
+    url: string | URL;
+    postMessage = mockPostMessage;
+    terminate = mockTerminate;
+
+    constructor(url: string | URL, options?: WorkerOptions) {
+        this.url = url;
+    }
+
+    set onmessage(callback: (event: { data: any }) => void) {
+        onmessageCallback = callback;
+    }
+    
+    get onmessage() {
+        return onmessageCallback;
+    }
+
+    set onerror(callback: (error: any) => void) {
+        onerrorCallback = callback;
+    }
+
+    get onerror() {
+        return onerrorCallback;
+    }
+}
+
+vi.stubGlobal('Worker', MockWorker);
 
 // Mock file-saver or URL.createObjectURL if used directly for downloads
 global.URL.createObjectURL = vi.fn(() => "mock-url");
