@@ -41,6 +41,7 @@ const mockSuccessPosition = {
 describe("AddWaypoint", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     mockNavigate.mockClear();
     mockUseImageCapture.useImageCapture.mockReturnValue({
       capturedImage: null,
