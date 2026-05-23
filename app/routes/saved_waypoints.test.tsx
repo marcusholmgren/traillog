@@ -88,6 +88,7 @@ const mockWaypoints: db.Waypoint[] = [
 describe("SavedWaypoints", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     mockNavigate.mockClear();
     window.alert = vi.fn();
     URL.createObjectURL = vi.fn(() => "mock-url");
