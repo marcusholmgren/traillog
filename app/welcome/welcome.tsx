@@ -1,11 +1,11 @@
-import { NavLink } from "react-router-dom";
+import { NavLink } from "react-router";
 import { useState, useEffect } from "react";
 import {
   getWaypointCount,
   getTotalDistance,
   getRecentTreks,
 } from "../services/statistics";
-import { Route } from "../services/db";
+import { type Route } from "../services/db";
 
 export function Welcome() {
   const [waypointCount, setWaypointCount] = useState(0);

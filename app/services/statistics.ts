@@ -1,5 +1,5 @@
-import { getSavedWaypoints, getSavedRoutes, Route } from "./db";
-import * as GeoJSON from "geojson";
+import { getSavedWaypoints, getSavedRoutes, type Route } from "./db";
+import type * as GeoJSON from "geojson";
 
 export async function getWaypointCount(): Promise<number> {
   const waypoints = await getSavedWaypoints();
