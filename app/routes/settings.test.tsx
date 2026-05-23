@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import Settings from "./settings";
 import * as db from "~/services/db";
 import { vi } from "vitest";
@@ -51,11 +51,15 @@ Object.defineProperty(HTMLAnchorElement.prototype, 'click', {
 describe("Settings Page", () => {
   beforeEach(() => {
     vi.resetAllMocks(); // Reset mocks before each test
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
   });
 
-  it("renders settings heading", () => {
+  it("renders settings heading", async () => {
     render(<Settings />);
-    expect(screen.getByRole("heading", { name: /settings/i })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /settings/i })).toBeInTheDocument();
+    });
   });
 
   describe("Waypoints Import/Export", () => {
@@ -65,7 +69,9 @@ describe("Settings Page", () => {
 
       await waitFor(() => expect(mockPostMessage).toHaveBeenCalledTimes(1));
 
-      onmessageCallback({data: '{"type":"FeatureCollection","features":[]}'});
+      act(() => {
+        onmessageCallback({data: '{"type":"FeatureCollection","features":[]}'});
+      });
 
       await waitFor(() => expect(mockAnchorClick).toHaveBeenCalledTimes(1));
     });
@@ -88,7 +94,9 @@ describe("Settings Page", () => {
 
       await waitFor(() => expect(mockPostMessage).toHaveBeenCalledTimes(1));
 
-      onerrorCallback(new Error("Export failed"));
+      act(() => {
+        onerrorCallback(new Error("Export failed"));
+      });
 
       await waitFor(() => expect(screen.getByText(/an error occurred/i)).toBeInTheDocument());
     });
@@ -101,7 +109,9 @@ describe("Settings Page", () => {
 
         await waitFor(() => expect(mockPostMessage).toHaveBeenCalledTimes(1));
 
-        onmessageCallback({data: '{"type":"FeatureCollection","features":[]}'});
+        act(() => {
+          onmessageCallback({data: '{"type":"FeatureCollection","features":[]}'});
+        });
 
         await waitFor(() => expect(mockAnchorClick).toHaveBeenCalledTimes(1));
     });
@@ -111,7 +121,6 @@ describe("Settings Page", () => {
         render(<Settings />);
         const file = new File(['[]'], "routes.json", { type: "application/json" });
         const fileInput = screen.getByTestId("import-routes-input");
-
 
         fireEvent.change(fileInput, { target: { files: [file] } });
 
@@ -125,15 +134,18 @@ describe("Settings Page", () => {
 
         await waitFor(() => expect(mockPostMessage).toHaveBeenCalledTimes(1));
 
-        onerrorCallback(new Error("Export failed"));
+        act(() => {
+          onerrorCallback(new Error("Export failed"));
+        });
 
         await waitFor(() => expect(screen.getByText(/an error occurred/i)).toBeInTheDocument());
       });
   });
 
   describe("Danger Zone", () => {
-    it("opens delete confirmation dialog on 'Delete all waypoints' click", () => {
+    it("opens delete confirmation dialog on 'Delete all waypoints' click", async () => {
       render(<Settings />);
+      await waitFor(() => expect(screen.getByRole("heading", { name: /settings/i })).toBeInTheDocument());
       fireEvent.click(screen.getByRole("button", { name: /delete all waypoints/i }));
       expect(screen.getByRole("dialog")).toBeInTheDocument();
       expect(screen.getByText(/are you sure you want to delete all waypoint data/i)).toBeInTheDocument();

@@ -8,6 +8,7 @@ import type { Waypoint } from "./db";
 beforeEach(() => {
   indexedDB = new IDBFactory();
   vi.restoreAllMocks();
+  vi.spyOn(console, 'warn').mockImplementation(() => {});
 });
 
 // This constant is based on the implementation detail in db.ts
