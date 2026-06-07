@@ -136,7 +136,7 @@ export default function EditWaypoint({
   }
 
   return (
-    <Form method="post" className="flex flex-col h-screen">
+    <Form method="post" encType="multipart/form-data" className="flex flex-col h-screen">
       <header className="flex items-center justify-between p-4 border-b border-slate-200">
         <Button onClick={handleCancel} className="p-2">
           <ArrowLeftIcon className="h-6 w-6" />
