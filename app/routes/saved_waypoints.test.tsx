@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, it, expect, vi, beforeEach, Mock } from "vitest";
+import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import SavedWaypoints, { clientLoader, clientAction } from "./saved_waypoints";
 import * as db from "~/services/db";
 
@@ -62,7 +62,7 @@ vi.mock("react-router", async () => {
   };
 });
 
-const mockDb = db as {
+const mockDb = db as unknown as {
   getSavedWaypoints: Mock;
   deleteWaypoint: Mock;
 };
@@ -138,26 +138,26 @@ describe("SavedWaypoints", () => {
 
   describe("Component UI", () => {
     it("displays waypoints from loaderData", () => {
-      render(<SavedWaypoints loaderData={{ waypoints: mockWaypoints, error: null }} actionData={null} />);
+      render(<SavedWaypoints loaderData={{ waypoints: mockWaypoints, error: null }} actionData={undefined} params={{}} matches={[] as any} />);
       expect(screen.getByText("Point Alpha")).toBeInTheDocument();
       expect(screen.getByText("Point Beta")).toBeInTheDocument();
       expect(screen.getByAltText("Point Alpha")).toBeInTheDocument();
     });
 
     it("displays empty message when there are no waypoints", () => {
-        render(<SavedWaypoints loaderData={{ waypoints: [], error: null }} actionData={null} />);
+        render(<SavedWaypoints loaderData={{ waypoints: [], error: null }} actionData={undefined} params={{}} matches={[] as any} />);
         expect(screen.getByText("No waypoints saved yet.")).toBeInTheDocument();
     });
 
     it("handles GeoJSON export", async () => {
         const user = userEvent.setup();
 
-        render(<SavedWaypoints loaderData={{ waypoints: mockWaypoints, error: null }} actionData={null} />);
+        render(<SavedWaypoints loaderData={{ waypoints: mockWaypoints, error: null }} actionData={undefined} params={{}} matches={[] as any} />);
 
         const mockLink = { href: "", download: "", click: vi.fn() };
         const spy = vi.spyOn(document, "createElement").mockReturnValue(mockLink as any);
-        const appendSpy = vi.spyOn(document.body, "appendChild").mockImplementation(() => {});
-        const removeSpy = vi.spyOn(document.body, "removeChild").mockImplementation(() => {});
+        const appendSpy = vi.spyOn(document.body, "appendChild").mockImplementation((node) => node);
+        const removeSpy = vi.spyOn(document.body, "removeChild").mockImplementation((child) => child);
 
         await user.click(screen.getByText(/export all to geojson/i));
 

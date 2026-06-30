@@ -320,28 +320,30 @@ export function waypointsToGeoJSON(
           ? [waypoint.longitude, waypoint.latitude, waypoint.altitude]
           : [waypoint.longitude, waypoint.latitude];
 
+      const properties: any = {
+          id: waypoint.id,
+          name: waypoint.name,
+          createdAt: waypoint.createdAt,
+      };
+
+      if (waypoint.notes) {
+        properties.notes = waypoint.notes;
+      }
+      if (waypoint.imageDataUrl) {
+        properties.imageDataUrl = waypoint.imageDataUrl;
+      }
+      if (waypoint.altitude !== undefined && waypoint.altitude !== null) {
+        properties.altitude = waypoint.altitude;
+      }
+
       const feature: GeoJSON.Feature<GeoJSON.Point> = {
         type: "Feature",
         geometry: {
           type: "Point",
           coordinates: coordinates,
         },
-        properties: {
-          id: waypoint.id,
-          name: waypoint.name,
-          createdAt: waypoint.createdAt,
-        },
+        properties: properties,
       };
-
-      if (waypoint.notes) {
-        feature.properties.notes = waypoint.notes;
-      }
-      if (waypoint.imageDataUrl) {
-        feature.properties.imageDataUrl = waypoint.imageDataUrl;
-      }
-      if (waypoint.altitude !== undefined && waypoint.altitude !== null) {
-        feature.properties.altitude = waypoint.altitude;
-      }
 
       return feature;
     }

@@ -102,9 +102,11 @@ export const mockGeolocation = {
 export const setupMockGeolocation = () => {
   const originalGeolocation = global.navigator.geolocation;
   
-  global.navigator.geolocation = {
-    ...mockGeolocation
-  } as any;
+  Object.defineProperty(global.navigator, 'geolocation', {
+    value: { ...mockGeolocation },
+    configurable: true,
+    writable: true,
+  });
   
   return originalGeolocation;
 };

@@ -147,7 +147,7 @@ export default function AddWaypoint({
           capturedImage={capturedImage}
           imageError={imageError}
           isCapturing={isCapturing}
-          videoRef={videoRef}
+          videoRef={videoRef as React.RefObject<HTMLVideoElement>}
           handleCaptureImageClick={handleCaptureImageClick}
           handleChooseFileClick={handleChooseFileClick}
           handleRemoveImageClick={handleRemoveImageClick}
@@ -158,7 +158,7 @@ export default function AddWaypoint({
       </main>
 
       <footer className="p-4 border-t border-slate-200 flex justify-end gap-4">
-        <Button type="button" variant="secondary" onClick={handleCancel}>
+        <Button type="button" outline onClick={handleCancel}>
           Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting}>
