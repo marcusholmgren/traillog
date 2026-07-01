@@ -68,7 +68,7 @@ export const NavbarItem = forwardRef(function NavbarItem(
       )}
       {'href' in props ? (
         <Link
-          {...props}
+          {...props as any}
           className={classes}
           data-current={current ? 'true' : undefined}
           ref={ref as React.ForwardedRef<HTMLAnchorElement>}
@@ -77,7 +77,7 @@ export const NavbarItem = forwardRef(function NavbarItem(
         </Link>
       ) : (
         <Headless.Button
-          {...props}
+          {...props as any}
           className={clsx('cursor-default', classes)}
           data-current={current ? 'true' : undefined}
           ref={ref}

@@ -27,7 +27,7 @@ vi.mock("react-router", async () => {
   };
 });
 
-const mockDb = db as {
+const mockDb = db as unknown as {
   getSavedRoutes: Mock;
   deleteRoute: Mock;
 };
@@ -102,6 +102,8 @@ describe("SavedRoutesPage", () => {
           <SavedRoutesPage
             loaderData={{ routes: mockRoutesData }}
             actionData={undefined}
+            params={{}}
+            matches={[] as any}
           />
         </MemoryRouter>
       );
@@ -115,6 +117,8 @@ describe("SavedRoutesPage", () => {
           <SavedRoutesPage
             loaderData={{ routes: [] }}
             actionData={undefined}
+            params={{}}
+            matches={[] as any}
           />
         </MemoryRouter>
       );
@@ -127,6 +131,8 @@ describe("SavedRoutesPage", () => {
           <SavedRoutesPage
             loaderData={{ routes: mockRoutesData }}
             actionData={undefined}
+            params={{}}
+            matches={[] as any}
           />
         </MemoryRouter>
       );

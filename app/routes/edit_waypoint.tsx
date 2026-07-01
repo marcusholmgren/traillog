@@ -208,7 +208,7 @@ export default function EditWaypoint({
           capturedImage={capturedImage}
           imageError={imageError}
           isCapturing={isCapturing}
-          videoRef={videoRef}
+          videoRef={videoRef as React.RefObject<HTMLVideoElement>}
           handleCaptureImageClick={handleCaptureImageClick}
           handleChooseFileClick={handleChooseFileClick}
           handleRemoveImageClick={handleRemoveImageClick}
@@ -221,7 +221,7 @@ export default function EditWaypoint({
       <footer className="p-4 border-t border-slate-200 flex justify-end gap-4 sticky bottom-0">
         <Button
           type="button"
-          variant="secondary"
+          outline
           onClick={handleCancel}
           disabled={isSubmitting}
         >

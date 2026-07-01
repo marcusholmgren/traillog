@@ -476,7 +476,7 @@ describe("Waypoint Database Operations (db.ts)", () => {
     });
 
     it("should delete a route", async () => {
-      const routeId = await db.addRoute("To Be Deleted", [10, 20]);
+      const routeId = await db.addRoute("To Be Deleted", { type: "LineString", coordinates: [[10, 20]] });
       let route = await db.getRouteById(routeId);
       expect(route).toBeDefined();
 
@@ -491,7 +491,7 @@ describe("Waypoint Database Operations (db.ts)", () => {
     });
 
     it("addRoute should create a new route if name is an empty string", async () => {
-      const routeId = await db.addRoute("", [1]);
+      const routeId = await db.addRoute("", { type: "LineString", coordinates: [[10, 20]] });
       const route = await db.getRouteById(routeId);
       expect(route).toBeDefined();
       expect(route?.name).toBe("");
@@ -555,7 +555,7 @@ describe("Waypoint Database Operations (db.ts)", () => {
       type: "FeatureCollection",
       features: sampleRouteObjects.map(r => ({
         type: "Feature",
-        geometry: r.geometry,
+        geometry: r.geometry as GeoJSON.LineString,
         properties: { name: r.name, createdAt: r.createdAt, id: r.id } // id might not be used on import
       }))
     };
@@ -580,7 +580,7 @@ describe("Waypoint Database Operations (db.ts)", () => {
       const routeAddTx = routeDb.transaction("routes", "readwrite"); // Use string literal "routes"
       for (const route of sampleRouteObjects) {
         // Add route with its specific geometry and createdAt
-        await routeAddTx.store.add({ name: route.name, geometry: route.geometry, createdAt: route.createdAt });
+        await routeAddTx.store.add({ name: route.name, geometry: route.geometry, createdAt: route.createdAt } as any);
       }
       await routeAddTx.done;
       routeDb.close();

@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, it, expect, vi, beforeEach, Mock } from "vitest";
+import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import { MemoryRouter } from "react-router";
 import EditWaypoint, { clientLoader, clientAction } from "./edit_waypoint";
 import * as db from "~/services/db";
@@ -25,8 +25,8 @@ vi.mock("react-router", async () => {
   };
 });
 
-const mockDb = db as { getWaypointById: Mock; updateWaypoint: Mock };
-const mockGeolocation = geolocation as { 
+const mockDb = db as unknown as { getWaypointById: Mock; updateWaypoint: Mock };
+const mockGeolocation = geolocation as unknown as {
     getCurrentPosition: Mock; 
     calculateCompassDirection: Mock;
     translateToShorthand: Mock;
@@ -95,7 +95,7 @@ describe("EditWaypoint", () => {
       formData.append("notes", "Updated notes");
       const request = new Request("http://localhost", { method: "POST", body: formData });
 
-      const response = await clientAction({ request, params: { wpId: "1" } } as any);
+      const response = await clientAction({ request, params: { wpId: "1" } } as any) as Response;
 
       expect(mockDb.updateWaypoint).toHaveBeenCalledWith(1, {
         name: "Updated Name",
@@ -111,7 +111,7 @@ describe("EditWaypoint", () => {
       const formData = new FormData();
       formData.append("name", "");
       const request = new Request("http://localhost", { method: "POST", body: formData });
-      const response = await clientAction({ request, params: { wpId: "1" } } as any);
+      const response = await clientAction({ request, params: { wpId: "1" } } as any) as { error: string };
       expect(response.error).toBe("Waypoint name is required.");
     });
   });
@@ -125,20 +125,20 @@ describe("EditWaypoint", () => {
     };
 
     it("renders form fields with default values from loaderData", () => {
-      render(<EditWaypoint loaderData={mockLoaderData} actionData={null} />);
+      render(<EditWaypoint loaderData={mockLoaderData as any} actionData={undefined} params={{wpId: "1"}} matches={[] as any} />);
       expect(screen.getByLabelText(/name/i)).toHaveValue(mockWaypoint.name);
       expect(screen.getByLabelText(/notes/i)).toHaveValue(mockWaypoint.notes);
       expect(screen.getByLabelText(/latitude/i)).toHaveValue(String(mockWaypoint.latitude));
     });
 
     it("displays an error if loaderData contains an error", () => {
-      render(<EditWaypoint loaderData={{ error: "Waypoint not found." }} actionData={null} />);
+      render(<EditWaypoint loaderData={{ error: "Waypoint not found." } as any} actionData={undefined} params={{wpId: "1"}} matches={[] as any} />);
       expect(screen.getByText("Error")).toBeInTheDocument();
       expect(screen.getByText("Waypoint not found.")).toBeInTheDocument();
     });
 
     it("displays an error if actionData contains an error", () => {
-        render(<EditWaypoint loaderData={mockLoaderData} actionData={{ error: "Update failed."}} />);
+        render(<EditWaypoint loaderData={mockLoaderData as any} actionData={{ error: "Update failed."}} params={{wpId: "1"}} matches={[] as any} />);
         expect(screen.getByText("Error: Update failed.")).toBeInTheDocument();
     });
 
@@ -146,7 +146,7 @@ describe("EditWaypoint", () => {
       const user = userEvent.setup();
       render(
         <MemoryRouter>
-          <EditWaypoint loaderData={mockLoaderData} actionData={null} />
+          <EditWaypoint loaderData={mockLoaderData as any} actionData={undefined} params={{wpId: "1"}} matches={[] as any} />
         </MemoryRouter>
       );
       await user.click(screen.getByRole("button", { name: /cancel/i }));
@@ -155,8 +155,8 @@ describe("EditWaypoint", () => {
 
     it("initializes image capture with image from loaderData", () => {
         const setCapturedImage = vi.fn();
-        mockUseImageCapture.useImageCapture.mockReturnValueOnce({ setCapturedImage });
-        render(<EditWaypoint loaderData={mockLoaderData} actionData={null} />);
+        mockUseImageCapture.useImageCapture.mockReturnValueOnce({ setCapturedImage } as any);
+        render(<EditWaypoint loaderData={mockLoaderData as any} actionData={undefined} params={{wpId: "1"}} matches={[] as any} />);
         expect(setCapturedImage).toHaveBeenCalledWith(mockWaypoint.imageDataUrl);
     });
   });
