@@ -111,22 +111,22 @@ export const SidebarItem = forwardRef(function SidebarItem(
           className="absolute inset-y-2 -left-4 w-0.5 rounded-full bg-zinc-950 dark:bg-white"
         />
       )}
-      {'to' in props ? (
+      {('href' in props && props.href !== undefined) || ('to' in props && props.to !== undefined) ? (
         <Headless.CloseButton
           as={Link}
-          {...props}
+          {...(props as any)}
           className={classes}
           data-current={current ? 'true' : undefined}
-          ref={ref}
+          ref={ref as React.ForwardedRef<HTMLAnchorElement>}
         >
           <TouchTarget>{children}</TouchTarget>
         </Headless.CloseButton>
       ) : (
         <Headless.Button
-          {...props}
+          {...(props as Headless.ButtonProps)}
           className={clsx('cursor-default', classes)}
           data-current={current ? 'true' : undefined}
-          ref={ref}
+          ref={ref as React.ForwardedRef<HTMLButtonElement>}
         >
           <TouchTarget>{children}</TouchTarget>
         </Headless.Button>

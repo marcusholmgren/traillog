@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import Settings from "./settings";
 import * as db from "~/services/db";
 import { vi } from "vitest";
@@ -65,7 +65,9 @@ describe("Settings Page", () => {
 
       await waitFor(() => expect(mockPostMessage).toHaveBeenCalledTimes(1));
 
-      onmessageCallback({data: '{"type":"FeatureCollection","features":[]}'});
+      act(() => {
+        onmessageCallback({data: '{"type":"FeatureCollection","features":[]}'});
+      });
 
       await waitFor(() => expect(mockAnchorClick).toHaveBeenCalledTimes(1));
     });
@@ -88,7 +90,9 @@ describe("Settings Page", () => {
 
       await waitFor(() => expect(mockPostMessage).toHaveBeenCalledTimes(1));
 
-      onerrorCallback(new Error("Export failed"));
+      act(() => {
+        onerrorCallback(new Error("Export failed"));
+      });
 
       await waitFor(() => expect(screen.getByText(/an error occurred/i)).toBeInTheDocument());
     });
@@ -101,7 +105,9 @@ describe("Settings Page", () => {
 
         await waitFor(() => expect(mockPostMessage).toHaveBeenCalledTimes(1));
 
-        onmessageCallback({data: '{"type":"FeatureCollection","features":[]}'});
+        act(() => {
+          onmessageCallback({data: '{"type":"FeatureCollection","features":[]}'});
+        });
 
         await waitFor(() => expect(mockAnchorClick).toHaveBeenCalledTimes(1));
     });
@@ -125,7 +131,9 @@ describe("Settings Page", () => {
 
         await waitFor(() => expect(mockPostMessage).toHaveBeenCalledTimes(1));
 
-        onerrorCallback(new Error("Export failed"));
+        act(() => {
+          onerrorCallback(new Error("Export failed"));
+        });
 
         await waitFor(() => expect(screen.getByText(/an error occurred/i)).toBeInTheDocument());
       });
