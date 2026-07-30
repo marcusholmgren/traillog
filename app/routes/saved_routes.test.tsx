@@ -100,10 +100,10 @@ describe("SavedRoutesPage", () => {
       render(
         <MemoryRouter>
           <SavedRoutesPage
-            {...({
-              loaderData: { routes: mockRoutesData },
-              actionData: undefined,
-            } as any)}
+            loaderData={{ routes: mockRoutesData }}
+            actionData={undefined}
+            params={{}}
+            matches={[] as any}
           />
         </MemoryRouter>
       );
@@ -115,10 +115,10 @@ describe("SavedRoutesPage", () => {
       render(
         <MemoryRouter>
           <SavedRoutesPage
-            {...({
-              loaderData: { routes: [] },
-              actionData: undefined,
-            } as any)}
+            loaderData={{ routes: [] }}
+            actionData={undefined}
+            params={{}}
+            matches={[] as any}
           />
         </MemoryRouter>
       );
@@ -129,10 +129,10 @@ describe("SavedRoutesPage", () => {
       render(
         <MemoryRouter>
           <SavedRoutesPage
-            {...({
-              loaderData: { routes: mockRoutesData },
-              actionData: undefined,
-            } as any)}
+            loaderData={{ routes: mockRoutesData }}
+            actionData={undefined}
+            params={{}}
+            matches={[] as any}
           />
         </MemoryRouter>
       );

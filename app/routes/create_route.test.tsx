@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
-import { describe, test, it, expect, beforeEach, type Mock } from "vitest";
+import { describe, it, expect, beforeEach, test, type Mock } from "vitest";
 import CreateRoute from "./create_route";
 import * as db from "~/services/db";
 import type { Waypoint } from "~/services/db"; // Ensure Waypoint type is imported

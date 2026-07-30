@@ -7,3 +7,7 @@
 
 # JetBrains IDEs
 /.idea/
+
+.antigravitycli
+
+/dist

@@ -8,6 +8,7 @@ import type { Waypoint } from "./db";
 beforeEach(() => {
   indexedDB = new IDBFactory();
   vi.restoreAllMocks();
+  vi.spyOn(console, 'warn').mockImplementation(() => {});
 });
 
 // This constant is based on the implementation detail in db.ts
@@ -495,7 +496,7 @@ describe("Waypoint Database Operations (db.ts)", () => {
     it("addRoute should create a new route if name is an empty string", async () => {
       const routeId = await db.addRoute("", {
         type: "LineString",
-        coordinates: [[1]],
+        coordinates: [[10, 20]],
       });
       const route = await db.getRouteById(routeId);
       expect(route).toBeDefined();

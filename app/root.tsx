@@ -62,6 +62,16 @@ function PathRedirectHandler() {
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+      const swUrl = `${import.meta.env.BASE_URL || "/"}sw.js`;
+      navigator.serviceWorker
+        .register(swUrl)
+        .then((reg) => console.log("Service Worker registered successfully:", reg))
+        .catch((err) => console.error("Service Worker registration failed:", err));
+    }
+  }, []);
+
   return (
     <html
         lang="en"
@@ -70,6 +80,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="manifest" href={`${import.meta.env.BASE_URL || "/"}manifest.webmanifest`} />
+        <link rel="icon" type="image/png" href={`${import.meta.env.BASE_URL || "/"}traillog_icon.png`} />
+        <link rel="apple-touch-icon" href={`${import.meta.env.BASE_URL || "/"}traillog_icon.png`} />
         <Meta />
         <Links />
       </head>

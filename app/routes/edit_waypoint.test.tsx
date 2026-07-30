@@ -26,7 +26,7 @@ vi.mock("react-router", async () => {
 });
 
 const mockDb = db as unknown as { getWaypointById: Mock; updateWaypoint: Mock };
-const mockGeolocation = geolocation as unknown as { 
+const mockGeolocation = geolocation as unknown as {
     getCurrentPosition: Mock; 
     calculateCompassDirection: Mock;
     translateToShorthand: Mock;
@@ -96,7 +96,7 @@ describe("EditWaypoint", () => {
       formData.append("notes", "Updated notes");
       const request = new Request("http://localhost", { method: "POST", body: formData });
 
-      const response = await clientAction({ request, params: { wpId: "1" } } as any);
+      const response = await clientAction({ request, params: { wpId: "1" } } as any) as Response;
 
       expect(mockDb.updateWaypoint).toHaveBeenCalledWith(1, {
         name: "Updated Name",
@@ -112,8 +112,8 @@ describe("EditWaypoint", () => {
       const formData = new FormData();
       formData.append("name", "");
       const request = new Request("http://localhost", { method: "POST", body: formData });
-      const response = await clientAction({ request, params: { wpId: "1" } } as any);
-      expect((response as { error: string }).error).toBe("Waypoint name is required.");
+      const response = await clientAction({ request, params: { wpId: "1" } } as any) as { error: string };
+      expect(response.error).toBe("Waypoint name is required.");
     });
   });
 
@@ -126,20 +126,20 @@ describe("EditWaypoint", () => {
     };
 
     it("renders form fields with default values from loaderData", () => {
-      render(<EditWaypoint {...({ loaderData: mockLoaderData, actionData: undefined } as any)} />);
+      render(<EditWaypoint loaderData={mockLoaderData as any} actionData={undefined} params={{wpId: "1"}} matches={[] as any} />);
       expect(screen.getByLabelText(/name/i)).toHaveValue(mockWaypoint.name);
       expect(screen.getByLabelText(/notes/i)).toHaveValue(mockWaypoint.notes);
       expect(screen.getByLabelText(/latitude/i)).toHaveValue(String(mockWaypoint.latitude));
     });
 
     it("displays an error if loaderData contains an error", () => {
-      render(<EditWaypoint {...({ loaderData: { error: "Waypoint not found." }, actionData: undefined } as any)} />);
+      render(<EditWaypoint loaderData={{ error: "Waypoint not found." } as any} actionData={undefined} params={{wpId: "1"}} matches={[] as any} />);
       expect(screen.getByText("Error")).toBeInTheDocument();
       expect(screen.getByText("Waypoint not found.")).toBeInTheDocument();
     });
 
     it("displays an error if actionData contains an error", () => {
-        render(<EditWaypoint {...({ loaderData: mockLoaderData, actionData: { error: "Update failed." } } as any)} />);
+        render(<EditWaypoint loaderData={mockLoaderData as any} actionData={{ error: "Update failed."}} params={{wpId: "1"}} matches={[] as any} />);
         expect(screen.getByText("Error: Update failed.")).toBeInTheDocument();
     });
 
@@ -147,7 +147,7 @@ describe("EditWaypoint", () => {
       const user = userEvent.setup();
       render(
         <MemoryRouter>
-          <EditWaypoint {...({ loaderData: mockLoaderData, actionData: undefined } as any)} />
+          <EditWaypoint loaderData={mockLoaderData as any} actionData={undefined} params={{wpId: "1"}} matches={[] as any} />
         </MemoryRouter>
       );
       await user.click(screen.getByRole("button", { name: /cancel/i }));
@@ -156,8 +156,8 @@ describe("EditWaypoint", () => {
 
     it("initializes image capture with image from loaderData", () => {
         const setCapturedImage = vi.fn();
-        mockUseImageCapture.useImageCapture.mockReturnValueOnce({ setCapturedImage });
-        render(<EditWaypoint {...({ loaderData: mockLoaderData, actionData: undefined } as any)} />);
+        mockUseImageCapture.useImageCapture.mockReturnValueOnce({ setCapturedImage } as any);
+        render(<EditWaypoint loaderData={mockLoaderData as any} actionData={undefined} params={{wpId: "1"}} matches={[] as any} />);
         expect(setCapturedImage).toHaveBeenCalledWith(mockWaypoint.imageDataUrl);
     });
   });

@@ -75,6 +75,7 @@ const mockWaypoints: db.Waypoint[] = [
 describe("SavedWaypoints Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     mockNavigate.mockClear();
     window.confirm = vi.fn(() => true);
     URL.createObjectURL = vi.fn(() => "blob:http://localhost/mock-url");
@@ -145,21 +146,21 @@ describe("SavedWaypoints Component", () => {
 
   describe("Component UI", () => {
     it("displays waypoints from loaderData", () => {
-      render(<SavedWaypoints {...({ loaderData: { waypoints: mockWaypoints }, actionData: undefined } as any)} />);
+      render(<SavedWaypoints loaderData={{ waypoints: mockWaypoints, error: null }} actionData={undefined} params={{}} matches={[] as any} />);
       expect(screen.getByText("Point Alpha")).toBeInTheDocument();
       expect(screen.getByText("Point Beta")).toBeInTheDocument();
       expect(screen.getByAltText("Point Alpha")).toBeInTheDocument();
     });
 
     it("displays empty message when there are no waypoints", () => {
-        render(<SavedWaypoints {...({ loaderData: { waypoints: [] }, actionData: undefined } as any)} />);
+        render(<SavedWaypoints loaderData={{ waypoints: [], error: null }} actionData={undefined} params={{}} matches={[] as any} />);
         expect(screen.getByText("No waypoints saved yet.")).toBeInTheDocument();
     });
 
     it("handles GeoJSON export", async () => {
         const user = userEvent.setup();
 
-        render(<SavedWaypoints {...({ loaderData: { waypoints: mockWaypoints }, actionData: undefined } as any)} />);
+        render(<SavedWaypoints loaderData={{ waypoints: mockWaypoints, error: null }} actionData={undefined} params={{}} matches={[] as any} />);
 
         const mockLink = { href: "", download: "", click: vi.fn() };
         const spy = vi.spyOn(document, "createElement").mockReturnValue(mockLink as any);

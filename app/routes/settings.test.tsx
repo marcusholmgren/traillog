@@ -51,11 +51,15 @@ Object.defineProperty(HTMLAnchorElement.prototype, 'click', {
 describe("Settings Page", () => {
   beforeEach(() => {
     vi.resetAllMocks(); // Reset mocks before each test
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
   });
 
-  it("renders settings heading", () => {
+  it("renders settings heading", async () => {
     render(<Settings />);
-    expect(screen.getByRole("heading", { name: /settings/i })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /settings/i })).toBeInTheDocument();
+    });
   });
 
   describe("Waypoints Import/Export", () => {
@@ -118,7 +122,6 @@ describe("Settings Page", () => {
         const file = new File(['[]'], "routes.json", { type: "application/json" });
         const fileInput = screen.getByTestId("import-routes-input");
 
-
         fireEvent.change(fileInput, { target: { files: [file] } });
 
         await waitFor(() => expect(importSpy).toHaveBeenCalledTimes(1));
@@ -140,8 +143,9 @@ describe("Settings Page", () => {
   });
 
   describe("Danger Zone", () => {
-    it("opens delete confirmation dialog on 'Delete all waypoints' click", () => {
+    it("opens delete confirmation dialog on 'Delete all waypoints' click", async () => {
       render(<Settings />);
+      await waitFor(() => expect(screen.getByRole("heading", { name: /settings/i })).toBeInTheDocument());
       fireEvent.click(screen.getByRole("button", { name: /delete all waypoints/i }));
       expect(screen.getByRole("dialog")).toBeInTheDocument();
       expect(screen.getByText(/are you sure you want to delete all waypoint data/i)).toBeInTheDocument();

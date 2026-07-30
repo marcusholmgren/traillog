@@ -1,10 +1,11 @@
 // vitest.config.ts
 import { defineConfig } from "vitest/config";
-import tsconfigPaths from "vite-tsconfig-paths";
 import path from "path";
 
 export default defineConfig({
-  plugins: [tsconfigPaths()], // Use tsconfig paths but don't include the react-router plugin
+  resolve: {
+    tsconfigPaths: true,
+  },
   test: {
     globals: true,
     environment: "jsdom", // Ensure JSDOM environment for components using DOM

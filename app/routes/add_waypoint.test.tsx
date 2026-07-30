@@ -41,6 +41,7 @@ const mockSuccessPosition = {
 describe("AddWaypoint", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     mockNavigate.mockClear();
     mockUseImageCapture.useImageCapture.mockReturnValue({
       capturedImage: null,
@@ -79,17 +80,17 @@ describe("AddWaypoint", () => {
       formData.append("longitude", "-118.2437");
       const request = new Request("http://localhost", { method: "POST", body: formData });
       mockDb.addWaypoint.mockResolvedValue({ id: 1 });
-      const response = await clientAction({ request } as any);
-      expect((response as Response).status).toBe(302);
-      expect((response as Response).headers.get("Location")).toBe("/waypoints");
+      const response = (await clientAction({ request } as any)) as Response;
+      expect(response.status).toBe(302);
+      expect(response.headers.get("Location")).toBe("/waypoints");
     });
 
     it("should return an error if name is missing", async () => {
         const formData = new FormData();
         formData.append("name", "");
         const request = new Request("http://localhost", { method: "POST", body: formData });
-        const response = await clientAction({ request } as any);
-        expect((response as { error: string }).error).toBe("Waypoint name is required.");
+        const response = (await clientAction({ request } as any)) as { error: string };
+        expect(response.error).toBe("Waypoint name is required.");
     });
   });
 
@@ -102,14 +103,14 @@ describe("AddWaypoint", () => {
     };
 
     it("renders form fields and displays coordinates", () => {
-      render(<AddWaypoint {...({ loaderData: mockLoaderData, actionData: undefined } as any)} />);
+      render(<AddWaypoint loaderData={mockLoaderData} actionData={undefined} params={{}} matches={[] as any} />);
       expect(screen.getByLabelText(/name/i)).toBeInTheDocument();
       const coordsInput = screen.getByLabelText(/coordinates/i) as HTMLInputElement;
       expect(coordsInput.value).toBe("34.0522, -118.2437");
     });
 
     it("displays 'Loading...' for coordinates if data is null", () => {
-      render(<AddWaypoint {...({ loaderData: { latitude: null, longitude: null, altitude: null, error: "Loading..." }, actionData: undefined } as any)} />);
+      render(<AddWaypoint loaderData={{ latitude: null, longitude: null, altitude: null, error: "Loading..." }} actionData={undefined} params={{}} matches={[] as any} />);
       const coordsInput = screen.getByLabelText(/coordinates/i) as HTMLInputElement;
       expect(coordsInput.value).toBe("Loading...");
     });
@@ -118,7 +119,7 @@ describe("AddWaypoint", () => {
       const user = userEvent.setup();
       render(
         <MemoryRouter initialEntries={["/"]}>
-            <AddWaypoint {...({ loaderData: mockLoaderData, actionData: undefined } as any)} />
+            <AddWaypoint loaderData={mockLoaderData} actionData={undefined} params={{}} matches={[] as any} />
         </MemoryRouter>
       );
       const cancelButton = screen.getByRole("button", { name: /cancel/i });

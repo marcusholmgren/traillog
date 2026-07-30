@@ -103,7 +103,7 @@ export default function AddWaypoint({
   };
 
   return (
-    <Form method="post" className="flex flex-col h-screen">
+    <Form method="post" encType="multipart/form-data" className="flex flex-col h-screen">
       <header className="flex items-center justify-between p-4 border-b border-slate-200">
         <Button onClick={handleCancel} className="p-2">
           <ArrowLeftIcon className="h-6 w-6" />
@@ -147,7 +147,7 @@ export default function AddWaypoint({
           capturedImage={capturedImage}
           imageError={imageError}
           isCapturing={isCapturing}
-          videoRef={videoRef}
+          videoRef={videoRef as React.RefObject<HTMLVideoElement>}
           handleCaptureImageClick={handleCaptureImageClick}
           handleChooseFileClick={handleChooseFileClick}
           handleRemoveImageClick={handleRemoveImageClick}
@@ -158,7 +158,7 @@ export default function AddWaypoint({
       </main>
 
       <footer className="p-4 border-t border-slate-200 flex justify-end gap-4">
-        <Button type="button" variant="secondary" onClick={handleCancel}>
+        <Button type="button" outline onClick={handleCancel}>
           Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting}>

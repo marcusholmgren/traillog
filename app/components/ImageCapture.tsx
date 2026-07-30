@@ -47,7 +47,7 @@ export function ImageCapture({
             <Button
               type="button"
               onClick={handleCancelCamera}
-              variant="secondary"
+              outline
             >
               Cancel
             </Button>
@@ -81,7 +81,7 @@ export function ImageCapture({
         <Button
           type="button"
           onClick={handleChooseFileClick}
-          variant="secondary"
+          outline
           className="flex-grow min-w-[calc(50%-0.25rem)]"
         >
           <PhotoIcon className="h-5 w-5 mr-2" />
@@ -91,7 +91,7 @@ export function ImageCapture({
           <Button
             type="button"
             onClick={handleRemoveImageClick}
-            variant="destructive"
+            color="red"
             className="w-full mt-2"
           >
             <XMarkIcon className="h-5 w-5 mr-2" />

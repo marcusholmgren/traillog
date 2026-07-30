@@ -136,7 +136,7 @@ export default function EditWaypoint({
   }
 
   return (
-    <Form method="post" className="flex flex-col h-screen">
+    <Form method="post" encType="multipart/form-data" className="flex flex-col h-screen">
       <header className="flex items-center justify-between p-4 border-b border-slate-200">
         <Button onClick={handleCancel} className="p-2">
           <ArrowLeftIcon className="h-6 w-6" />
@@ -208,7 +208,7 @@ export default function EditWaypoint({
           capturedImage={capturedImage}
           imageError={imageError}
           isCapturing={isCapturing}
-          videoRef={videoRef}
+          videoRef={videoRef as React.RefObject<HTMLVideoElement>}
           handleCaptureImageClick={handleCaptureImageClick}
           handleChooseFileClick={handleChooseFileClick}
           handleRemoveImageClick={handleRemoveImageClick}
@@ -221,7 +221,7 @@ export default function EditWaypoint({
       <footer className="p-4 border-t border-slate-200 flex justify-end gap-4 sticky bottom-0">
         <Button
           type="button"
-          variant="secondary"
+          outline
           onClick={handleCancel}
           disabled={isSubmitting}
         >
