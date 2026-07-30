@@ -66,9 +66,9 @@ export const NavbarItem = forwardRef(function NavbarItem(
           className="absolute inset-x-2 -bottom-2.5 h-0.5 rounded-full bg-zinc-950 dark:bg-white"
         />
       )}
-      {'href' in props ? (
+      {('href' in props && props.href !== undefined) || ('to' in props && props.to !== undefined) ? (
         <Link
-          {...props as any}
+          {...(props as React.ComponentPropsWithoutRef<typeof Link>)}
           className={classes}
           data-current={current ? 'true' : undefined}
           ref={ref as React.ForwardedRef<HTMLAnchorElement>}
@@ -77,10 +77,10 @@ export const NavbarItem = forwardRef(function NavbarItem(
         </Link>
       ) : (
         <Headless.Button
-          {...props as any}
+          {...(props as Headless.ButtonProps)}
           className={clsx('cursor-default', classes)}
           data-current={current ? 'true' : undefined}
-          ref={ref}
+          ref={ref as React.ForwardedRef<HTMLButtonElement>}
         >
           <TouchTarget>{children}</TouchTarget>
         </Headless.Button>

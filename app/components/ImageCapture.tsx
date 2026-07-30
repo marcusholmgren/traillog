@@ -10,7 +10,7 @@ interface ImageCaptureProps {
   capturedImage: string | null;
   imageError: string | null;
   isCapturing: boolean;
-  videoRef: React.RefObject<HTMLVideoElement>;
+  videoRef: React.RefObject<HTMLVideoElement | null>;
   handleCaptureImageClick: () => void;
   handleChooseFileClick: () => void;
   handleRemoveImageClick: () => void;

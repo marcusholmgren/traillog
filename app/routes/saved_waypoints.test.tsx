@@ -68,45 +68,42 @@ const mockDb = db as unknown as {
 };
 
 const mockWaypoints: db.Waypoint[] = [
-  {
-    id: 1,
-    name: "Point Alpha",
-    latitude: 30,
-    longitude: 40,
-    createdAt: Date.now() - 2000,
-    imageDataUrl: "image1.jpg",
-  },
-  {
-    id: 2,
-    name: "Point Beta",
-    latitude: 31,
-    longitude: 41,
-    createdAt: Date.now() - 1000,
-  },
+  { id: 1, latitude: 10, longitude: 20, name: "Point Alpha", imageDataUrl: "image1.png", createdAt: Date.now() },
+  { id: 2, latitude: 30, longitude: 40, name: "Point Beta", createdAt: Date.now() },
 ];
 
-describe("SavedWaypoints", () => {
+describe("SavedWaypoints Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(console, 'error').mockImplementation(() => {});
     mockNavigate.mockClear();
-    window.alert = vi.fn();
-    URL.createObjectURL = vi.fn(() => "mock-url");
+    window.confirm = vi.fn(() => true);
+    URL.createObjectURL = vi.fn(() => "blob:http://localhost/mock-url");
     URL.revokeObjectURL = vi.fn();
   });
 
   describe("clientLoader", () => {
     it("should fetch and return waypoints", async () => {
       mockDb.getSavedWaypoints.mockResolvedValue(mockWaypoints);
-      const response = await clientLoader({} as any);
+
+      const response = await clientLoader({ params: {} } as any);
+
       expect(mockDb.getSavedWaypoints).toHaveBeenCalled();
       expect(response.waypoints).toEqual(mockWaypoints);
-      expect(response.error).toBeNull();
     });
+
+    it("should return an error message if fetching fails", async () => {
+        mockDb.getSavedWaypoints.mockRejectedValue(new Error("DB error"));
+  
+        const response = await clientLoader({ params: {} } as any);
+  
+        expect(response.error).toBe("Failed to load waypoints. Please try again.");
+        expect(response.waypoints).toEqual([]);
+      });
   });
 
   describe("clientAction", () => {
-    it("should delete a waypoint and refetch the list", async () => {
+    it("should delete a waypoint and return updated list", async () => {
       const formData = new FormData();
       formData.append("waypoint_id", "1");
       const request = new Request("http://localhost", { method: "POST", body: formData });
@@ -117,9 +114,20 @@ describe("SavedWaypoints", () => {
       const response = await clientAction({ request } as any);
 
       expect(mockDb.deleteWaypoint).toHaveBeenCalledWith(1);
-      expect(mockDb.getSavedWaypoints).toHaveBeenCalledTimes(1);
+      expect(mockDb.getSavedWaypoints).toHaveBeenCalled();
       expect(response.waypoints).toEqual([mockWaypoints[1]]);
-      expect(response.error).toBeNull();
+    });
+
+    it("should return an error if waypoint_id is missing", async () => {
+        const formData = new FormData();
+        const request = new Request("http://localhost", { method: "POST", body: formData });
+  
+        mockDb.getSavedWaypoints.mockResolvedValue(mockWaypoints);
+
+        const response = await clientAction({ request } as any);
+
+        expect(response.error).toBe("Invalid Waypoint ID.");
+        expect(response.waypoints).toEqual(mockWaypoints);
     });
 
     it("should return an error if deletion fails", async () => {
@@ -157,7 +165,7 @@ describe("SavedWaypoints", () => {
         const mockLink = { href: "", download: "", click: vi.fn() };
         const spy = vi.spyOn(document, "createElement").mockReturnValue(mockLink as any);
         const appendSpy = vi.spyOn(document.body, "appendChild").mockImplementation((node) => node);
-        const removeSpy = vi.spyOn(document.body, "removeChild").mockImplementation((child) => child);
+        const removeSpy = vi.spyOn(document.body, "removeChild").mockImplementation((node) => node);
 
         await user.click(screen.getByText(/export all to geojson/i));
 

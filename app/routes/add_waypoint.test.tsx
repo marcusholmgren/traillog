@@ -28,7 +28,7 @@ vi.mock("react-router", async () => {
 
 const mockDb = db as unknown as { addWaypoint: Mock };
 const mockGeolocation = geolocation as unknown as { getCurrentPosition: Mock };
-const mockUseImageCapture = imageCaptureHook as { useImageCapture: Mock };
+const mockUseImageCapture = imageCaptureHook as unknown as { useImageCapture: Mock };
 
 const mockSuccessPosition = {
   coords: {
@@ -80,7 +80,7 @@ describe("AddWaypoint", () => {
       formData.append("longitude", "-118.2437");
       const request = new Request("http://localhost", { method: "POST", body: formData });
       mockDb.addWaypoint.mockResolvedValue({ id: 1 });
-      const response = await clientAction({ request } as any) as Response;
+      const response = (await clientAction({ request } as any)) as Response;
       expect(response.status).toBe(302);
       expect(response.headers.get("Location")).toBe("/waypoints");
     });
@@ -89,7 +89,7 @@ describe("AddWaypoint", () => {
         const formData = new FormData();
         formData.append("name", "");
         const request = new Request("http://localhost", { method: "POST", body: formData });
-        const response = await clientAction({ request } as any) as { error: string };
+        const response = (await clientAction({ request } as any)) as { error: string };
         expect(response.error).toBe("Waypoint name is required.");
     });
   });
@@ -110,7 +110,7 @@ describe("AddWaypoint", () => {
     });
 
     it("displays 'Loading...' for coordinates if data is null", () => {
-      render(<AddWaypoint loaderData={{ latitude: null, longitude: null, altitude: null, error: "error" }} actionData={undefined} params={{}} matches={[] as any} />);
+      render(<AddWaypoint loaderData={{ latitude: null, longitude: null, altitude: null, error: "Loading..." }} actionData={undefined} params={{}} matches={[] as any} />);
       const coordsInput = screen.getByLabelText(/coordinates/i) as HTMLInputElement;
       expect(coordsInput.value).toBe("Loading...");
     });

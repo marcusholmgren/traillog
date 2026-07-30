@@ -476,7 +476,10 @@ describe("Waypoint Database Operations (db.ts)", () => {
     });
 
     it("should delete a route", async () => {
-      const routeId = await db.addRoute("To Be Deleted", { type: "LineString", coordinates: [[10, 20]] });
+      const routeId = await db.addRoute("To Be Deleted", {
+        type: "LineString",
+        coordinates: [[10, 20]],
+      });
       let route = await db.getRouteById(routeId);
       expect(route).toBeDefined();
 
@@ -491,7 +494,10 @@ describe("Waypoint Database Operations (db.ts)", () => {
     });
 
     it("addRoute should create a new route if name is an empty string", async () => {
-      const routeId = await db.addRoute("", { type: "LineString", coordinates: [[10, 20]] });
+      const routeId = await db.addRoute("", {
+        type: "LineString",
+        coordinates: [[10, 20]],
+      });
       const route = await db.getRouteById(routeId);
       expect(route).toBeDefined();
       expect(route?.name).toBe("");
@@ -580,7 +586,7 @@ describe("Waypoint Database Operations (db.ts)", () => {
       const routeAddTx = routeDb.transaction("routes", "readwrite"); // Use string literal "routes"
       for (const route of sampleRouteObjects) {
         // Add route with its specific geometry and createdAt
-        await routeAddTx.store.add({ name: route.name, geometry: route.geometry, createdAt: route.createdAt } as any);
+        await routeAddTx.store.add({ id: route.id, name: route.name, geometry: route.geometry, createdAt: route.createdAt });
       }
       await routeAddTx.done;
       routeDb.close();

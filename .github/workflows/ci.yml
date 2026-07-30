@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - master
+      - main
 
 jobs:
   build-and-test:
@@ -19,10 +20,14 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
+
+      - name: Run typecheck
+        run: npm run typecheck
+
+      - name: Run tests
+        run: npm test -- --run
 
       - name: Build application
         run: npm run build
 
-      - name: Run tests
-        run: npm run test

@@ -1,9 +1,9 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
+import { describe, it, expect, beforeEach, test, type Mock } from "vitest";
 import CreateRoute from "./create_route";
 import * as db from "~/services/db";
 import type { Waypoint } from "~/services/db"; // Ensure Waypoint type is imported
-import { describe, it, expect, beforeEach, test, type Mock } from "vitest";
 
 // Mock the db module
 vi.mock("~/services/db", async () => {
@@ -52,12 +52,12 @@ const mockWaypoints: Waypoint[] = [
 describe("CreateRoute", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    (db.getSavedWaypoints as Mock).mockResolvedValue(mockWaypoints);
-    (db.addRoute as Mock).mockResolvedValue(undefined);
+    (db.getSavedWaypoints as unknown as Mock).mockResolvedValue(mockWaypoints);
+    (db.addRoute as unknown as Mock).mockResolvedValue(undefined);
   });
 
   test("renders loading state initially", () => {
-    (db.getSavedWaypoints as Mock).mockImplementation(
+    (db.getSavedWaypoints as unknown as Mock).mockImplementation(
       () => new Promise(() => {})
     ); // Never resolves
     render(

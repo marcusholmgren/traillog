@@ -4,8 +4,8 @@ import {
   getWaypointCount,
   getTotalDistance,
   getRecentTreks,
-} from "../services/statistics";
-import { type Route } from "../services/db";
+} from "~/services/statistics";
+import { type Route } from "~/services/db";
 
 export function Welcome() {
   const [waypointCount, setWaypointCount] = useState(0);

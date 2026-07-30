@@ -159,30 +159,37 @@ const styles = {
 }
 
 type ButtonProps = (
-  | { color?: keyof typeof styles.colors; outline?: never; plain?: never }
-  | { color?: never; outline: true; plain?: never }
-  | { color?: never; outline?: never; plain: true }
-) & { className?: string; children: React.ReactNode } & (
+  | { color?: keyof typeof styles.colors; outline?: never; plain?: never; variant?: never }
+  | { color?: never; outline: true; plain?: never; variant?: never }
+  | { color?: never; outline?: never; plain: true; variant?: never }
+  | { color?: keyof typeof styles.colors; outline?: boolean; plain?: boolean; variant?: string }
+) & { className?: string; children?: React.ReactNode } & (
     | Omit<Headless.ButtonProps, 'as' | 'className'>
     | Omit<React.ComponentPropsWithoutRef<typeof Link>, 'className'>
   )
 
 export const Button = forwardRef(function Button(
-  { color, outline, plain, className, children, ...props }: ButtonProps,
+  { color, outline, plain, variant, className, children, ...props }: ButtonProps,
   ref: React.ForwardedRef<HTMLElement>
 ) {
+  const isOutline = outline || variant === 'secondary' || variant === 'outline'
+  const isPlain = plain || variant === 'plain'
+  const resolvedColor = color ?? (variant === 'destructive' ? 'red' : undefined)
+
   let classes = clsx(
     className,
     styles.base,
-    outline ? styles.outline : plain ? styles.plain : clsx(styles.solid, styles.colors[color ?? 'dark/zinc'])
+    isOutline ? styles.outline : isPlain ? styles.plain : clsx(styles.solid, styles.colors[resolvedColor ?? 'dark/zinc'])
   )
 
-  return 'href' in props ? (
-    <Link {...props as any} className={classes} ref={ref as React.ForwardedRef<HTMLAnchorElement>}>
+  const isLink = ('href' in props && props.href !== undefined) || ('to' in props && props.to !== undefined)
+
+  return isLink ? (
+    <Link {...(props as React.ComponentPropsWithoutRef<typeof Link>)} className={classes} ref={ref as React.ForwardedRef<HTMLAnchorElement>}>
       <TouchTarget>{children}</TouchTarget>
     </Link>
   ) : (
-    <Headless.Button {...props as any} className={clsx(classes, 'cursor-default')} ref={ref}>
+    <Headless.Button {...(props as Headless.ButtonProps)} className={clsx(classes, 'cursor-default')} ref={ref as React.ForwardedRef<HTMLButtonElement>}>
       <TouchTarget>{children}</TouchTarget>
     </Headless.Button>
   )

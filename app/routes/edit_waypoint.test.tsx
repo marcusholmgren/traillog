@@ -31,7 +31,7 @@ const mockGeolocation = geolocation as unknown as {
     calculateCompassDirection: Mock;
     translateToShorthand: Mock;
 };
-const mockUseImageCapture = imageCaptureHook as { useImageCapture: Mock };
+const mockUseImageCapture = imageCaptureHook as unknown as { useImageCapture: Mock };
 
 const mockWaypoint = {
   id: 1,
@@ -40,6 +40,7 @@ const mockWaypoint = {
   longitude: -118.2437,
   notes: "Some notes",
   imageDataUrl: "data:image/png;base64,initial_image",
+  createdAt: 1000000000000,
 };
 
 describe("EditWaypoint", () => {
@@ -103,8 +104,8 @@ describe("EditWaypoint", () => {
         altitude: undefined,
         imageDataUrl: null, // formData.get returns null for missing fields
       });
-      expect(response.status).toBe(302);
-      expect(response.headers.get("Location")).toBe("/waypoints");
+      expect((response as Response).status).toBe(302);
+      expect((response as Response).headers.get("Location")).toBe("/waypoints");
     });
 
     it("should return an error if name is missing", async () => {
@@ -120,8 +121,8 @@ describe("EditWaypoint", () => {
     const mockLoaderData = {
       waypoint: mockWaypoint,
       bearing: 123,
-      direction: "SE",
-      error: null,
+      direction: geolocation.ShorthandDirection.SE,
+      error: undefined,
     };
 
     it("renders form fields with default values from loaderData", () => {

@@ -320,10 +320,10 @@ export function waypointsToGeoJSON(
           ? [waypoint.longitude, waypoint.latitude, waypoint.altitude]
           : [waypoint.longitude, waypoint.latitude];
 
-      const properties: any = {
-          id: waypoint.id,
-          name: waypoint.name,
-          createdAt: waypoint.createdAt,
+      const properties: Record<string, any> = {
+        id: waypoint.id,
+        name: waypoint.name,
+        createdAt: waypoint.createdAt,
       };
 
       if (waypoint.notes) {

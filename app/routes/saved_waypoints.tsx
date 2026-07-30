@@ -28,13 +28,23 @@ import { Switch } from "~/components/switch";
 import { Field, Label } from "~/components/fieldset";
 
 export async function clientLoader({ params }: Route.ClientLoaderArgs) {
-  const savedWaypoints = await getSavedWaypoints();
-  return { waypoints: savedWaypoints, error: null };
+  try {
+    const savedWaypoints = await getSavedWaypoints();
+    return { waypoints: savedWaypoints, error: null };
+  } catch (err) {
+    console.error("Error fetching waypoints:", err);
+    return { waypoints: [], error: "Failed to load waypoints. Please try again." };
+  }
 }
 
 export async function clientAction({ request }: Route.ClientActionArgs) {
   const formData = await request.formData();
-  const id = Number(formData.get("waypoint_id"));
+  const rawId = formData.get("waypoint_id");
+  if (!rawId) {
+    const savedWaypoints = await getSavedWaypoints();
+    return { waypoints: savedWaypoints, error: "Invalid Waypoint ID." };
+  }
+  const id = Number(rawId);
   try {
     await deleteWaypoint(id);
     const savedWaypoints = await getSavedWaypoints();
@@ -43,8 +53,8 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     console.error("Error deleting waypoint:", err);
     const savedWaypoints = await getSavedWaypoints();
     return {
-      error: "Failed to delete waypoint. Please try again.",
       waypoints: savedWaypoints,
+      error: "Failed to delete waypoint. Please try again.",
     };
   }
 }
