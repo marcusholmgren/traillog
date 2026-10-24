@@ -12,8 +12,10 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       reactRouter(),
       VitePWA({
+        outDir: "build/client",
         registerType: "autoUpdate",
         workbox: {
+          globDirectory: "build/client",
           globPatterns: ["**/*.{js,css,html,ico,png,svg,jpg,jpeg,woff,woff2}"],
           navigateFallback: "index.html",
           // Add index.html to precaching manually because React Router v7 generates it post-build in SPA mode

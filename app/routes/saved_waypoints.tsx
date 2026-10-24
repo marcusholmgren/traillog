@@ -148,10 +148,10 @@ export default function SavedWaypoints({
         <img
           src={waypoint.imageDataUrl}
           alt={waypoint.name || "Waypoint image"}
-          className="h-16 w-16 rounded-lg object-cover"
+          className="h-16 w-16 shrink-0 rounded-lg object-cover"
         />
       ) : (
-        <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-slate-200">
+        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-slate-200">
           <MapPinIcon className="h-8 w-8 text-slate-500" />
         </div>
       )}
@@ -163,12 +163,12 @@ export default function SavedWaypoints({
           Lat: {coordinateFormat(waypoint.latitude)}, Lon:{" "}
           {coordinateFormat(waypoint.longitude)}
         </p>
-        {waypoint.altitude && (
+        {waypoint.altitude !== undefined && waypoint.altitude !== null && (
           <p className="text-sm text-slate-500">
             Altitude: {numberFormat(waypoint.altitude)}
           </p>
         )}
-        {isSortingEnabled && waypoint.distance && (
+        {isSortingEnabled && waypoint.distance !== undefined && (
           <p className="text-sm text-slate-500">
             Distance: {numberFormat(waypoint.distance)} km
           </p>

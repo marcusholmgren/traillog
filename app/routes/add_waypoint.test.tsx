@@ -9,7 +9,13 @@ import * as geolocation from "~/services/geolocation";
 import * as imageCaptureHook from "~/hooks/useImageCapture";
 
 // Mock dependencies
-vi.mock("~/services/db");
+vi.mock("~/services/db", async () => {
+  const actual = await vi.importActual("~/services/db");
+  return {
+    ...actual,
+    addWaypoint: vi.fn(),
+  };
+});
 vi.mock("~/services/geolocation");
 vi.mock("~/hooks/useImageCapture");
 
@@ -78,9 +84,19 @@ describe("AddWaypoint", () => {
       formData.append("name", "Test Waypoint");
       formData.append("latitude", "34.0522");
       formData.append("longitude", "-118.2437");
+      formData.append(
+        "imageDataUrl",
+        "data:image/jpeg;base64,/9j/4AAQ SkZJRg=="
+      );
       const request = new Request("http://localhost", { method: "POST", body: formData });
       mockDb.addWaypoint.mockResolvedValue({ id: 1 });
       const response = (await clientAction({ request } as any)) as Response;
+      expect(mockDb.addWaypoint).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "Test Waypoint",
+          imageDataUrl: "data:image/jpeg;base64,/9j/4AAQ+SkZJRg==",
+        })
+      );
       expect(response.status).toBe(302);
       expect(response.headers.get("Location")).toBe("/waypoints");
     });

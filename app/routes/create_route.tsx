@@ -243,7 +243,7 @@ export default function CreateRoute() {
           <h2 className="text-xl font-semibold text-slate-700 mb-2">
             No waypoints available to create a route.
           </h2>
-          <Button color="green" onClick={() => navigate("/waypoints/new")}>
+          <Button color="green" onClick={() => navigate("/waypoints/add")}>
             Go Add One!
           </Button>
         </div>

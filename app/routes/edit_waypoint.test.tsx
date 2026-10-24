@@ -8,7 +8,14 @@ import * as geolocation from "~/services/geolocation";
 import * as imageCaptureHook from "~/hooks/useImageCapture";
 
 // Mock dependencies
-vi.mock("~/services/db");
+vi.mock("~/services/db", async () => {
+  const actual = await vi.importActual("~/services/db");
+  return {
+    ...actual,
+    getWaypointById: vi.fn(),
+    updateWaypoint: vi.fn(),
+  };
+});
 vi.mock("~/services/geolocation");
 vi.mock("~/hooks/useImageCapture");
 
@@ -156,9 +163,15 @@ describe("EditWaypoint", () => {
 
     it("initializes image capture with image from loaderData", () => {
         const setCapturedImage = vi.fn();
-        mockUseImageCapture.useImageCapture.mockReturnValueOnce({ setCapturedImage } as any);
+        mockUseImageCapture.useImageCapture.mockReturnValueOnce({
+          capturedImage: mockWaypoint.imageDataUrl,
+          setCapturedImage,
+          handleCancelCamera: vi.fn(),
+        } as any);
         render(<EditWaypoint loaderData={mockLoaderData as any} actionData={undefined} params={{wpId: "1"}} matches={[] as any} />);
+        expect(mockUseImageCapture.useImageCapture).toHaveBeenCalledWith(mockWaypoint.imageDataUrl);
         expect(setCapturedImage).toHaveBeenCalledWith(mockWaypoint.imageDataUrl);
+        expect(screen.getByAltText("Waypoint")).toHaveAttribute("src", mockWaypoint.imageDataUrl);
     });
   });
 });

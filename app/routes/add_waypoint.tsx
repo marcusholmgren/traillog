@@ -1,12 +1,12 @@
 import { useEffect } from "react";
 import type { Route } from "./+types/add_waypoint";
 import { useNavigate, Form, redirect, useNavigation } from "react-router";
-import { addWaypoint } from "~/services/db";
+import { addWaypoint, normalizeImageDataUrl } from "~/services/db";
 import { Button } from "~/components/button";
 import { Input } from "~/components/input";
 import { Textarea } from "~/components/textarea";
 import { Field, Label } from "~/components/fieldset";
-import { ArrowLeftIcon, MapPinIcon } from "@heroicons/react/24/outline";
+import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import { coordinateFormat } from "~/services/formatter";
 import { useImageCapture } from "~/hooks/useImageCapture";
 import { ImageCapture } from "~/components/ImageCapture";
@@ -46,7 +46,10 @@ export const clientAction = async ({ request }: Route.ClientActionArgs) => {
     ? parseFloat(formData.get("altitude") as string)
     : undefined;
   const notes = formData.get("notes") as string;
-  const imageDataUrl = formData.get("imageDataUrl") as string | undefined;
+  const rawImageDataUrl = formData.get("imageDataUrl") as string | null;
+  const imageDataUrl = rawImageDataUrl
+    ? normalizeImageDataUrl(rawImageDataUrl)
+    : undefined;
 
   if (!name.trim()) {
     return { error: "Waypoint name is required." };
@@ -77,7 +80,7 @@ export default function AddWaypoint({
 }: Route.ComponentProps) {
   const navigate = useNavigate();
   const navigation = useNavigation();
-  const { latitude, longitude, altitude, error } = loaderData;
+  const { latitude, longitude, altitude } = loaderData;
   const isSubmitting = navigation.state === "submitting";
 
   const {
@@ -85,7 +88,6 @@ export default function AddWaypoint({
     imageError,
     isCapturing,
     videoRef,
-    streamRef,
     handleCaptureImageClick,
     handleTakePhotoFromStream,
     handleCancelCamera,
@@ -94,8 +96,10 @@ export default function AddWaypoint({
   } = useImageCapture();
 
   useEffect(() => {
-    handleCancelCamera(); // Ensure camera UI is hidden
-  });
+    return () => {
+      handleCancelCamera(); // Ensure camera stream is stopped on unmount
+    };
+  }, [handleCancelCamera]);
 
   const handleCancel = () => {
     handleCancelCamera(); // Ensure camera UI is hidden
@@ -105,7 +109,7 @@ export default function AddWaypoint({
   return (
     <Form method="post" encType="multipart/form-data" className="flex flex-col h-screen">
       <header className="flex items-center justify-between p-4 border-b border-slate-200">
-        <Button onClick={handleCancel} className="p-2">
+        <Button type="button" onClick={handleCancel} className="p-2">
           <ArrowLeftIcon className="h-6 w-6" />
         </Button>
         <h1 className="text-lg font-bold">New Waypoint</h1>
@@ -113,6 +117,11 @@ export default function AddWaypoint({
       </header>
 
       <main className="flex-grow overflow-y-auto p-4 space-y-4">
+        {actionData?.error && (
+          <div className="p-3 bg-red-100 text-red-700 rounded-md">
+            Error: {actionData.error}
+          </div>
+        )}
         <Field>
           <Label>Name</Label>
           <Input type="text" name="name" required />
@@ -154,7 +163,7 @@ export default function AddWaypoint({
           handleTakePhotoFromStream={handleTakePhotoFromStream}
           handleCancelCamera={handleCancelCamera}
         />
-        <input hidden name="imageDataUrl" value={capturedImage ?? undefined} />
+        <input type="hidden" name="imageDataUrl" value={capturedImage ?? ""} />
       </main>
 
       <footer className="p-4 border-t border-slate-200 flex justify-end gap-4">

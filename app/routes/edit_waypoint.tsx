@@ -3,6 +3,7 @@ import type { Route } from "./+types/edit_waypoint";
 import { Form, redirect, useNavigate, useNavigation } from "react-router";
 import {
   getWaypointById,
+  normalizeImageDataUrl,
   updateWaypoint,
   type WaypointUpdate,
 } from "~/services/db";
@@ -69,7 +70,10 @@ export const clientAction = async ({
   const name = formData.get("name") as string;
   const altitudeStr = formData.get("altitude") as string | null;
   const notes = formData.get("notes") as string;
-  const imageDataUrl = formData.get("imageDataUrl") as string | null;
+  const rawImageDataUrl = formData.get("imageDataUrl") as string | null;
+  const imageDataUrl = rawImageDataUrl
+    ? (normalizeImageDataUrl(rawImageDataUrl) ?? null)
+    : null;
 
   if (!name.trim()) {
     return { error: "Waypoint name is required." };
@@ -113,13 +117,21 @@ export default function EditWaypoint({
     handleCancelCamera,
     handleChooseFileClick,
     handleRemoveImageClick,
-  } = useImageCapture();
+  } = useImageCapture(waypoint?.imageDataUrl ?? null);
 
   useEffect(() => {
     if (waypoint?.imageDataUrl) {
       setCapturedImage(waypoint.imageDataUrl);
+    } else if (waypoint) {
+      setCapturedImage(null);
     }
-  }, [waypoint?.imageDataUrl, setCapturedImage]);
+  }, [waypoint, waypoint?.imageDataUrl, setCapturedImage]);
+
+  useEffect(() => {
+    return () => {
+      handleCancelCamera?.();
+    };
+  }, [handleCancelCamera]);
 
   const handleCancel = () => {
     handleCancelCamera();
@@ -138,7 +150,7 @@ export default function EditWaypoint({
   return (
     <Form method="post" encType="multipart/form-data" className="flex flex-col h-screen">
       <header className="flex items-center justify-between p-4 border-b border-slate-200">
-        <Button onClick={handleCancel} className="p-2">
+        <Button type="button" onClick={handleCancel} className="p-2">
           <ArrowLeftIcon className="h-6 w-6" />
         </Button>
         <h1 className="text-lg font-bold">Edit Waypoint</h1>
@@ -215,7 +227,7 @@ export default function EditWaypoint({
           handleTakePhotoFromStream={handleTakePhotoFromStream}
           handleCancelCamera={handleCancelCamera}
         />
-        <input hidden name="imageDataUrl" value={capturedImage ?? undefined} />
+        <input type="hidden" name="imageDataUrl" value={capturedImage ?? ""} />
       </main>
 
       <footer className="p-4 border-t border-slate-200 flex justify-end gap-4 sticky bottom-0">

@@ -38,6 +38,7 @@ export function ImageCapture({
             ref={videoRef}
             autoPlay
             playsInline
+            muted
             className="w-full max-w-md aspect-[4/3] rounded-lg"
           />
           <div className="flex gap-4 mt-4">
@@ -54,7 +55,7 @@ export function ImageCapture({
           </div>
         </div>
       )}
-      <div className="w-full aspect-[3/2] rounded-lg bg-slate-200 flex items-center justify-center mb-2">
+      <div className="w-full aspect-[3/2] rounded-lg bg-slate-200 flex items-center justify-center mb-2 overflow-hidden">
         {capturedImage ? (
           <img
             src={capturedImage}

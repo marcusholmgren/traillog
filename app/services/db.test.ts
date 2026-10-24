@@ -52,6 +52,27 @@ describe("Waypoint Database Operations (db.ts)", () => {
       expect(savedWaypoint?.imageDataUrl).toBe("data:image/png;base64,...");
     });
 
+    it("should repair base64 spaces and missing MIME types in imageDataUrl when adding or reading waypoints", async () => {
+      const corruptedImage = "data:image/jpeg;base64,/9j/4AAQ SkZJRg ABAQ==";
+      const id = await db.addWaypoint({
+        ...sampleWaypoint,
+        imageDataUrl: corruptedImage,
+      });
+      const savedWaypoint = await db.getWaypointById(id);
+      expect(savedWaypoint?.imageDataUrl).toBe(
+        "data:image/jpeg;base64,/9j/4AAQ+SkZJRg+ABAQ=="
+      );
+
+      const genericMimeId = await db.addWaypoint({
+        ...sampleWaypoint,
+        imageDataUrl: "data:application/octet-stream;base64,iVBORw0KGgo=",
+      });
+      const genericSaved = await db.getWaypointById(genericMimeId);
+      expect(genericSaved?.imageDataUrl).toBe(
+        "data:image/png;base64,iVBORw0KGgo="
+      );
+    });
+
     it("should auto-increment IDs for multiple waypoints", async () => {
       const id1 = await db.addWaypoint({
         ...sampleWaypoint,

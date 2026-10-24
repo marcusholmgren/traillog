@@ -79,14 +79,65 @@ export async function openWaypointsDB(): Promise<
 
 // --- Waypoint Functions ---
 
+/**
+ * Normalizes and repairs an image data URL or image source string.
+ * - Returns undefined for null, undefined, or empty/whitespace-only strings.
+ * - Repairs base64 payloads where '+' characters were corrupted into spaces
+ *   (e.g. by application/x-www-form-urlencoded form submissions).
+ * - Repairs missing or generic MIME types in base64 data URLs.
+ */
+export function normalizeImageDataUrl(
+  imageDataUrl?: string | null
+): string | undefined {
+  if (!imageDataUrl || typeof imageDataUrl !== "string") {
+    return undefined;
+  }
+  const trimmed = imageDataUrl.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+  if (trimmed.startsWith("data:")) {
+    const commaIndex = trimmed.indexOf(",");
+    if (commaIndex !== -1) {
+      let header = trimmed.slice(0, commaIndex).trim();
+      let payload = trimmed.slice(commaIndex + 1).trim();
+      if (!payload) {
+        return undefined;
+      }
+      if (header.includes(";base64")) {
+        // Restore '+' characters that may have been converted to spaces by URL-encoded form parsing
+        // and strip any line breaks/tabs in the base64 payload.
+        payload = payload.replace(/ /g, "+").replace(/[\r\n\t]/g, "");
+        if (
+          header === "data:;base64" ||
+          header === "data:application/octet-stream;base64"
+        ) {
+          let mime = "image/jpeg";
+          if (payload.startsWith("iVBOR")) mime = "image/png";
+          else if (payload.startsWith("R0lGOD")) mime = "image/gif";
+          else if (payload.startsWith("UklGR")) mime = "image/webp";
+          header = `data:${mime};base64`;
+        }
+      }
+      return `${header},${payload}`;
+    }
+  }
+  return trimmed;
+}
+
 export async function addWaypoint(
   waypointData: Omit<Waypoint, "id" | "createdAt">
 ): Promise<number> {
   const db = await openWaypointsDB();
+  const normalizedImage = normalizeImageDataUrl(waypointData.imageDataUrl);
   const waypoint: Omit<Waypoint, "id"> = {
     ...waypointData,
+    imageDataUrl: normalizedImage,
     createdAt: Date.now(),
   };
+  if (waypoint.imageDataUrl === undefined) {
+    delete waypoint.imageDataUrl;
+  }
   const id = await db.add(STORE_NAME_WAYPOINTS, waypoint as Waypoint);
   return Number(id);
 }
@@ -96,14 +147,39 @@ export async function getSavedWaypoints(): Promise<Waypoint[]> {
   // Return newest first by reversing the default ascending order from the index
   return db
     .getAllFromIndex(STORE_NAME_WAYPOINTS, "createdAt")
-    .then((w) => w.reverse());
+    .then((w) =>
+      w.reverse().map((waypoint) => {
+        if (waypoint.imageDataUrl !== undefined) {
+          const normalized = normalizeImageDataUrl(waypoint.imageDataUrl);
+          if (normalized !== waypoint.imageDataUrl) {
+            const copy = { ...waypoint, imageDataUrl: normalized };
+            if (copy.imageDataUrl === undefined) {
+              delete copy.imageDataUrl;
+            }
+            return copy;
+          }
+        }
+        return waypoint;
+      })
+    );
 }
 
 export async function getWaypointById(
   id: number
 ): Promise<Waypoint | undefined> {
   const db = await openWaypointsDB();
-  return db.get(STORE_NAME_WAYPOINTS, id);
+  const waypoint = await db.get(STORE_NAME_WAYPOINTS, id);
+  if (waypoint && waypoint.imageDataUrl !== undefined) {
+    const normalized = normalizeImageDataUrl(waypoint.imageDataUrl);
+    if (normalized !== waypoint.imageDataUrl) {
+      const copy = { ...waypoint, imageDataUrl: normalized };
+      if (copy.imageDataUrl === undefined) {
+        delete copy.imageDataUrl;
+      }
+      return copy;
+    }
+  }
+  return waypoint;
 }
 
 export async function updateWaypoint(
@@ -132,7 +208,9 @@ export async function updateWaypoint(
   }
   if (updates.imageDataUrl !== undefined) {
     updatedWaypoint.imageDataUrl =
-      updates.imageDataUrl === null ? undefined : updates.imageDataUrl;
+      updates.imageDataUrl === null
+        ? undefined
+        : normalizeImageDataUrl(updates.imageDataUrl);
   }
 
   await tx.store.put(updatedWaypoint);
@@ -159,8 +237,6 @@ export async function exportWaypoints(): Promise<string> {
 export async function importWaypoints(geoJsonString: string): Promise<void> {
   const geoJson: GeoJSON.FeatureCollection<GeoJSON.Point> =
     JSON.parse(geoJsonString);
-  const db = await openWaypointsDB();
-  const tx = db.transaction(STORE_NAME_WAYPOINTS, "readwrite");
 
   for (const feature of geoJson.features) {
     const properties = feature.properties;
@@ -178,11 +254,10 @@ export async function importWaypoints(geoJsonString: string): Promise<void> {
       longitude: coordinates[0],
       altitude: coordinates.length > 2 ? coordinates[2] : undefined,
       notes: properties?.notes,
-      imageDataUrl: properties?.imageDataUrl,
+      imageDataUrl: normalizeImageDataUrl(properties?.imageDataUrl),
     };
     await addWaypoint(waypointData); // Use existing addWaypoint function
   }
-  await tx.done;
 }
 
 // --- Route Functions ---
